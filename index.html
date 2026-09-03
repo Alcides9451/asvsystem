@@ -1,0 +1,946 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ASV System • Gestão Evoluída</title>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+:root{--p:#213547;--s:#334e68;--a:#2684ff;--ok:#2ca66f;--bad:#d64545;--warn:#e0a11a;--bg:#f3f6f9;--card:#fff;--txt:#243447;--muted:#748292;--bd:#d9e1e8}
+*{box-sizing:border-box;font-family:Segoe UI,Arial,sans-serif}body{margin:0;background:var(--bg);color:var(--txt)}
+button,input,select,textarea{font:inherit}button{cursor:pointer}.hidden{display:none!important}
+.app{display:flex;height:100vh}.sidebar{width:245px;background:var(--p);color:#fff;display:flex;flex-direction:column}.brand{padding:18px;font-size:1.15rem;text-align:center;border-bottom:1px solid #ffffff18}.brand span{font-weight:800}.brand b{font-weight:500}.userbox{display:flex;gap:10px;align-items:center;padding:14px;border-bottom:1px solid #ffffff18}.avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--a);font-weight:800}.userbox small{display:block;color:#bfd0df}.nav{padding:8px;overflow:auto;flex:1}.nav button{display:block;width:100%;border:0;background:transparent;color:#fff;padding:11px 12px;border-radius:7px;text-align:left;margin:2px 0}.nav button:hover,.nav button.active{background:#ffffff18}.side-footer{padding:10px;border-top:1px solid #ffffff18}.side-footer button{width:100%;margin-top:8px}
+.main{flex:1;overflow:auto;padding:18px}.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.topbar h1{margin:0}.top-actions{display:flex;gap:8px}.iconbtn,.btn{border:0;border-radius:7px;padding:9px 13px;font-weight:700}.iconbtn{background:#fff;border:1px solid var(--bd);color:var(--txt)}.btn.primary{background:var(--a);color:#fff}.btn.ok{background:var(--ok);color:#fff}.btn.bad{background:var(--bad);color:#fff}.btn.warn{background:var(--warn);color:#fff}.btn.secondary{background:#718096;color:#fff}.btn.light{background:#eef3f7;color:#31465a}
+#content{margin-top:14px}.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:15px;margin-bottom:14px;box-shadow:0 2px 8px #21354708}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.group{display:flex;flex-direction:column;gap:5px}.full{grid-column:1/-1}label{font-size:.82rem;font-weight:700}.group input,.group select,.group textarea{padding:9px 10px;border:1px solid var(--bd);border-radius:6px;outline:0}.group input:focus,.group select:focus,.group textarea:focus{border-color:var(--a)}
+.toolbar{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.toolbar-right{display:flex;gap:8px;flex-wrap:wrap}.search{min-width:260px}.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}.kpi{background:#fff;border:1px solid var(--bd);padding:14px;border-radius:9px}.kpi .label{font-size:.76rem;color:var(--muted)}.kpi .v{font-size:1.35rem;font-weight:800;margin-top:4px}.notice{background:#eef7ff;border:1px solid #cce6ff;padding:10px;border-radius:7px;font-size:.84rem}
+table{width:100%;border-collapse:collapse;font-size:.86rem}th,td{padding:8px;border-bottom:1px solid var(--bd);text-align:left}th{background:var(--p);color:#fff;position:sticky;top:0}tr:hover td{background:#fafcfe}.right{text-align:right!important}.tag{display:inline-block;padding:3px 7px;border-radius:999px;font-size:.72rem;font-weight:700}.tag.ok{background:#e6f6ee;color:#1f7a4b}.tag.warn{background:#fff3d8;color:#8a5c00}.tag.bad{background:#fde9e9;color:#9a2525}.low{background:#fff5f5}.expired{background:#fff0f0}.soon{background:#fff8e7}
+.modal{display:none;position:fixed;inset:0;z-index:100;background:#0b1620a6;align-items:center;justify-content:center;padding:14px}.modal.active{display:flex}.modal-box{width:min(900px,96vw);max-height:92vh;overflow:auto;background:#fff;border-radius:11px}.modal-head{padding:14px 17px;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between}.modal-head h3{margin:0}.close{border:0;background:transparent;font-size:1.4rem}.modal-body{padding:17px}.modal-foot{padding:12px 17px;border-top:1px solid var(--bd);display:flex;justify-content:flex-end;gap:8px}.entry-lock .modal-box{width:min(1050px,98vw);max-height:95vh}.entry-lock .modal-head .close{display:none}.entry-lock .modal-body{padding:14px}.scan-entry{display:grid;grid-template-columns:2fr 1fr auto;gap:8px;align-items:end}.scan-list{max-height:42vh;overflow:auto;margin-top:12px}.scan-list table input{width:90px}.scan-status{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}.scan-badge{padding:7px 10px;border:1px solid var(--bd);border-radius:8px;background:#f8fafc}.scan-help{background:#eef7ff;border:1px solid #cce6ff;padding:10px;border-radius:7px}.entry-lock .modal-foot{justify-content:space-between}
+.login{position:fixed;inset:0;z-index:300;background:linear-gradient(135deg,#182b3c,#243b53);display:grid;place-items:center;padding:15px}.login-card{width:min(430px,95vw);background:#fff;border-radius:12px;padding:22px;box-shadow:0 20px 70px #0007}.login-card h1{margin:0}.login-card .muted{color:var(--muted)}.login-grid{display:grid;gap:10px}.login-grid input{padding:10px;border:1px solid var(--bd);border-radius:7px}.progress{height:6px;background:#e7edf2;border-radius:99px;overflow:hidden}.progress>i{display:block;height:100%;background:var(--a)}
+.pdv{display:grid;grid-template-columns:2fr 1fr;gap:14px}.cart-hero{display:flex;align-items:center;gap:12px;padding:12px 14px;background:linear-gradient(135deg,#eef7ff,#fff);border:1px solid var(--bd);border-radius:10px;margin:10px 0}.cart-hero svg{width:70px;height:70px;flex:0 0 70px}.pdv-entry{display:grid;grid-template-columns:1fr 120px auto;gap:8px;align-items:end}.qty-cell input{width:78px}.discount-box{margin-top:12px;padding:12px;border:1px solid var(--bd);border-radius:9px;background:#fafcfe}.table-filters{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:12px;padding:10px;background:#f8fafc;border:1px solid var(--bd);border-radius:8px}.table-filters .group{min-width:160px}.table-filters input,.table-filters select{width:100%}.pager{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:12px}.pager-left,.pager-right{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.pager button{border:1px solid var(--bd);background:#fff;border-radius:6px;padding:6px 9px}.pager button.active{background:var(--a);color:#fff;border-color:var(--a)}.pager select{border:1px solid var(--bd);border-radius:6px;padding:6px}.table-actions{display:flex;gap:5px;flex-wrap:wrap}.total{font-size:2rem;text-align:right;font-weight:900;margin:15px 0}.checkgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:6px}.checkgrid label{font-weight:500}
+@media(max-width:850px){.sidebar{width:205px}.pdv{grid-template-columns:1fr}}@media(max-width:620px){.app{display:block}.sidebar{width:100%;height:auto}.nav{display:flex;overflow:auto}.nav button{width:auto;white-space:nowrap}.main{height:calc(100vh - 122px)}}
+@media print{.sidebar,.topbar,.login,.modal,#paymentModal,.side-footer{display:none!important}.main{padding:0;overflow:visible}body{background:#fff}.card{box-shadow:none;border:0}}
+</style>
+</head>
+<body>
+
+<div id="login" class="login">
+  <div class="login-card">
+    <h1>ASV System</h1>
+    <p class="muted">Gestão local com criptografia, perfis e auditoria.</p>
+    <div id="first-access" class="login-grid hidden">
+      <input id="adm-name" value="Administrador" placeholder="Nome do administrador">
+      <input id="adm-user" value="admin" placeholder="Usuário administrador">
+      <input id="adm-pass" type="password" value="Admin@1234" placeholder="Senha (mín. 8 caracteres)">
+      <input id="adm-pass2" type="password" value="Admin@1234" placeholder="Confirme a senha">
+      <button class="btn primary" onclick="setupAdmin()">Criar administrador</button>
+    </div>
+    <div id="login-access" class="login-grid">
+      <input id="login-user" placeholder="Usuário" autocomplete="username">
+      <input id="login-pass" type="password" placeholder="Senha" autocomplete="current-password">
+      <button class="btn primary" onclick="doLogin()">Entrar</button>
+    </div>
+    <small id="login-msg" class="muted">Primeiro acesso padrão: <b>admin</b> / <b>Admin@1234</b>. Recomenda-se alterar a senha depois.</small>
+  </div>
+</div>
+
+<div id="app" class="app hidden">
+  <aside class="sidebar">
+    <div class="brand"><span>ASV</span> System</div>
+    <div class="userbox"><div id="avatar" class="avatar">AS</div><div><strong id="user-name">Administrador</strong><small id="user-role">Admin</small></div></div>
+    <nav id="nav" class="nav"></nav>
+    <div class="side-footer"><span id="dbStatus">● Banco local</span><button class="btn secondary" onclick="logout()">Sair / Bloquear</button></div>
+  </aside>
+  <main class="main">
+    <header class="topbar"><div><h1 id="pageTitle">Dashboard</h1><div id="pageSub" style="color:var(--muted)">Visão geral</div></div>
+      <div class="top-actions"><button class="iconbtn" onclick="exportData()">⇩ JSON</button><button class="iconbtn" onclick="saveJSONToDrive()">☁ Salvar JSON no Drive</button><button class="iconbtn" onclick="configExecUrl()" title="Configurar URL /exec da Web App do Google Apps Script">⚙ URL do Drive</button><button class="iconbtn" onclick="backupEncrypted()">Backup criptografado</button></div>
+    </header>
+    <div id="content"></div>
+  </main>
+</div>
+
+<div id="modal" class="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <div class="modal-head"><h3 id="modalTitle">Novo Registro</h3><button class="close" onclick="closeModal()">×</button></div>
+    <form id="modalForm" onsubmit="submitModal(event)"><div class="modal-body" id="modalBody"></div><div class="modal-foot"><button type="button" class="btn secondary" onclick="closeModal()">Cancelar</button><button class="btn primary">Salvar</button></div></form>
+  </div>
+</div>
+
+<div id="paymentModal" class="modal" onclick="if(event.target===this)closePayment()">
+  <div class="modal-box" style="max-width:650px">
+    <div class="modal-head"><h3>Pagamento da Venda</h3><button class="close" onclick="closePayment()">×</button></div>
+    <form onsubmit="finalizeSale(event)"><div class="modal-body">
+      <div class="kpis"><div class="kpi"><div class="label">Total</div><div class="v" id="payTotal">R$ 0,00</div></div><div class="kpi"><div class="label">Recebido</div><div class="v" id="payReceived">R$ 0,00</div></div><div class="kpi"><div class="label">Restante</div><div class="v" id="payRemain">R$ 0,00</div></div></div>
+      <div id="paymentRows" style="margin-top:12px"></div>
+      <button type="button" class="btn light" onclick="addPaymentRow()">+ Forma de pagamento</button>
+      <div class="group" style="margin-top:10px"><label>Parcelas (somente cartão de crédito)</label><select id="payInstallments"><option value="1">1x</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="10">10x</option><option value="12">12x</option></select></div>
+      <div class="group" style="margin-top:10px"><label>Observação</label><textarea id="saleNote" rows="2"></textarea></div>
+      <div class="notice" style="margin-top:10px">A venda só será concluída quando o valor recebido cobrir o total. O estoque será baixado por <b>FEFO</b>: lotes com vencimento mais próximo primeiro.</div>
+    </div><div class="modal-foot"><button type="button" class="btn secondary" onclick="closePayment()">Cancelar</button><button class="btn ok">Concluir venda</button></div></form>
+  </div>
+</div>
+
+<div id="entryModal" class="modal entry-lock">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Entrada de Mercadoria — Bipagem e Contagem</h3></div>
+    <div class="modal-body">
+      <div class="scan-help"><b>Janela de entrada protegida:</b> ela não fecha por clique fora, ESC ou botão X. Finalize ou cancele explicitamente a operação quando terminar.</div>
+      <div class="scan-status"><div class="scan-badge">Itens bipados: <b id="entryScanCount">0</b></div><div class="scan-badge">Quantidade total: <b id="entryQtyTotal">0</b></div><div class="scan-badge">Linhas: <b id="entryLineCount">0</b></div></div>
+      <div class="scan-entry">
+        <div class="group"><label>Código de barras / SKU</label><input id="entryBarcode" autocomplete="off" placeholder="Bipe o código e pressione Enter"></div>
+        <div class="group"><label>Quantidade</label><input id="entryScanQty" type="number" min="1" step="1" value="1"></div>
+        <button type="button" class="btn primary" onclick="scanEntryProduct()">Bipar / Inserir</button>
+      </div>
+      <div class="grid" style="margin-top:10px">
+        <div class="group"><label>Data de entrada</label><input id="entryDate" type="date" readonly tabindex="-1"></div>
+        <div class="group"><label>Estoque destino</label><select id="entryStock"></select></div>
+        <div class="group"><label>Data de validade (opcional)</label><input id="entryExpiry" type="date"></div>
+        <div class="group"><label>Lote (opcional)</label><input id="entryLot" placeholder="Número do lote"></div>
+        <div class="group"><label>Custo unitário (R$)</label><input id="entryCost" type="number" min="0" step="any" value="0"></div>
+      </div>
+      <div class="scan-list" id="entryLines"></div>
+    </div>
+    <div class="modal-foot"><button type="button" class="btn secondary" onclick="cancelEntrySession()">Cancelar entrada</button><button type="button" class="btn ok" onclick="finishEntrySession()">Finalizar entrada</button></div>
+  </div>
+</div>
+
+<script>
+'use strict'; <!--Alterado Alcides-->
+window.ASV_EXEC_URL=localStorage.getItem('asv_exec_url')||'';
+if(window.ASV_EXEC_URL.includes('<?='))window.ASV_EXEC_URL='';
+function isValidExecUrl(value){
+  try{const u=new URL(String(value||'').trim());return u.protocol==='https:'&&u.hostname==='script.google.com'&&/\/macros\/s\/[^/]+\/exec$/.test(u.pathname)}catch(e){return false}
+}
+function configExecUrl(){
+  const cur=String(window.ASV_EXEC_URL||'').trim();
+  const url=prompt('Cole a URL /exec da sua Web App do Google Apps Script (Implantar > Nova implantação > App da Web):',cur);
+  if(url===null)return false;
+  const v=url.trim();
+  if(v&&!isValidExecUrl(v))return toast('URL inválida. Use a URL completa https://script.google.com/macros/s/.../exec.','bad'),false;
+  window.ASV_EXEC_URL=v;
+  if(v)localStorage.setItem('asv_exec_url',v);else localStorage.removeItem('asv_exec_url');
+  toast(v?'URL /exec configurada e salva neste navegador.':'URL /exec removida. Configure-a antes de salvar no Drive.');
+  return Boolean(v);
+}
+function driveSaveError(err){
+  const message=String(err?.message||err||'Erro desconhecido');
+  if(/403|forbidden|acesso negado/i.test(message))return 'A Web App recusou o acesso (HTTP 403). No Apps Script, crie uma nova implantação como App da Web, use “Executar como: Eu” e “Quem pode acessar: Qualquer pessoa”; depois informe a nova URL /exec.';
+  if(/failed to fetch|networkerror|load failed|network request failed/i.test(message))return 'Não foi possível acessar a Web App. Confirme que a implantação permite “Qualquer pessoa”, copie a nova URL terminada em /exec e verifique a conexão. O navegador também pode estar bloqueando a chamada por CORS.';
+  if(/resposta inválida/i.test(message))return message+' Confirme se doPost(e) retorna JSON pelo ContentService.';
+  return message;
+}
+const DB_NAME='ASVSystem_Evoluido', DB_VER=1;
+let db=null, session=null, cryptoKey=null, masterKey=null, masterSecret=null, masterSalt=null, currentPage='dashboard', modalSpec=null, modalEdit=null, pendingSale=null;
+const tableState={};
+const PERMS=['dashboard','clientes','produtos','estoque','transferencias','pdv','caixa','financeiro','relatorios','usuarios','logs','config'];
+const PAGES=[
+ ['dashboard','⌂ Dashboard'],['clientes','♙ Clientes'],['produtos','▣ Produtos'],['estoque','↓ Estoque / FEFO'],
+ ['transferencias','↔ Transferências'],['pdv','▤ PDV / Vendas'],['caixa','💵 Fechamento de Caixa'],
+ ['financeiro','◫ Financeiro'],['relatorios','▤ Relatórios'],['usuarios','♟ Usuários / Perfis'],['logs','≡ Logs'],['config','⚙ Segurança']
+];
+const FORMS={
+ cliente:{title:'Cadastro de Cliente',store:'clientes',fields:[
+  ['nome','text','Nome completo',1],['cpf','text','CPF',1],['telefone','text','Telefone',0],['email','email','E-mail',0],['endereco','text','Endereço',0],['bairro','text','Bairro',0],['cidade','text','Cidade',0],['uf','text','UF',0],['cep','text','CEP',0]]},
+ produto:{title:'Cadastro de Produto',store:'produtos',fields:[
+  ['cod','text','Código / SKU',1],['codigoBarras','text','Código de barras',0],['descricao','text','Descrição',1],['categoria','text','Categoria',1],['unidade','text','Unidade',1],['vCompra','number','Valor compra (R$)',1],['vVenda','number','Valor venda (R$)',1],['estoqueMin','number','Estoque mínimo',0],['ativo','select','Status',1,null,[['1','Ativo'],['0','Inativo']]]]},
+ entrada:{title:'Entrada de Mercadoria / Lote',store:'lotes',fields:[
+  ['produtoCod','select','Produto',1],['entradaEm','date','Data de entrada (automática, não editável)',0],['qtd','number','Quantidade',1],['vencimento','date','Vencimento (deixe em branco se não for perecível)',0],['lote','text','Lote',0],['custo','number','Custo unitário (R$)',0],['estoque','text','Estoque destino',1]]},
+ transferencia:{title:'Transferência entre Estoques',store:'transferencias',fields:[
+  ['produtoCod','select','Produto',1],['qtd','number','Quantidade',1],['origem','text','Estoque origem',1],['destino','text','Estoque destino',1],['lote','text','Lote (opcional)',0],['observacao','text','Observação',0]]},
+ financeiro:{title:'Novo Lançamento Financeiro',store:'financeiro',fields:[
+  ['tipo','select','Tipo',1,null,[['Pagar','Conta a pagar'],['Receber','Conta a receber']]],['descricao','text','Descrição',1],['valor','number','Valor (R$)',1],['vencimento','date','Vencimento',1],['status','select','Status',1,null,[['Pendente','Pendente'],['Pago','Pago'],['Cancelado','Cancelado']]]]},
+ usuario:{title:'Novo Usuário / Perfil',store:'usuarios',fields:[
+  ['nome','text','Nome',1],['login','text','Login',1],['senha','password','Senha',1],['perfil','select','Perfil',1,null,[['admin','Administrador'],['gerente','Gerente'],['caixa','Caixa'],['estoque','Estoque']]],['ativo','select','Status',1,null,[['1','Ativo'],['0','Inativo']]]]}}
+const DEFAULT_PERMS={admin:Object.fromEntries(PERMS.map(x=>[x,1])),gerente:Object.fromEntries(PERMS.map(x=>[x,1])),
+caixa:Object.fromEntries(PERMS.map(x=>[x,0])),estoque:Object.fromEntries(PERMS.map(x=>[x,0]))};
+Object.assign(DEFAULT_PERMS.caixa,{dashboard:1,pdv:1,caixa:1,clientes:1,produtos:1});
+Object.assign(DEFAULT_PERMS.estoque,{dashboard:1,produtos:1,estoque:1,transferencias:1,relatorios:1});
+const $=id=>document.getElementById(id), money=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const today=()=>new Date().toISOString().slice(0,10); const uid=()=>crypto.randomUUID();
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+
+function reqIDB(method,...args){return new Promise((res,rej)=>{const r=IDBDatabase.prototype[method] ? db[method](...args):null; if(r){r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}})}
+function openDB(){return new Promise((res,rej)=>{
+ let r=indexedDB.open(DB_NAME,DB_VER); r.onupgradeneeded=e=>{const d=e.target.result;
+ ['clientes','produtos','lotes','transferencias','vendas','financeiro','usuarios','logs','caixas','pagamentos','parcelas','config','inventario'].forEach(s=>{if(!d.objectStoreNames.contains(s))d.createObjectStore(s,{keyPath:'id'});});
+ };r.onsuccess=()=>{db=r.result;res()};r.onerror=()=>rej(r.error)})}
+function txStore(store,mode='readonly'){return db.transaction(store,mode).objectStore(store)}
+const ENCRYPTED_STORES=new Set(['clientes','produtos','lotes','transferencias','vendas','financeiro','caixas','pagamentos','parcelas','inventario','config']);
+async function getAll(store){
+  const raw=await new Promise((res,rej)=>{let r=txStore(store).getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+  if(!ENCRYPTED_STORES.has(store)) return raw;
+  if(!cryptoKey) return raw;
+  const out=[];
+  for(const row of raw){
+    if(row.__enc){ try{out.push(await dec(row.__enc));}catch(e){console.warn('Registro não pode ser decifrado',store,row.id)}}
+    else out.push(row);
+  }
+  return out;
+}
+async function put(store,obj){
+  if(ENCRYPTED_STORES.has(store) && cryptoKey){
+    const encData=await enc(obj);
+    const envelope={id:obj.id,__enc:encData};
+    return new Promise((res,rej)=>{let r=txStore(store,'readwrite').put(envelope);r.onsuccess=()=>res(obj);r.onerror=()=>rej(r.error)});
+  }
+  return new Promise((res,rej)=>{let r=txStore(store,'readwrite').put(obj);r.onsuccess=()=>res(obj);r.onerror=()=>rej(r.error)});
+}
+function del(store,id){return new Promise((res,rej)=>{let r=txStore(store,'readwrite').delete(id);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}
+async function log(action,entity,before=null,after=null){await put('logs',{id:uid(),ts:new Date().toISOString(),user:session?.login||'sistema',action,entity,before,after})}
+
+async function derive(password,salt){let b=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveKey','deriveBits']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:150000,hash:'SHA-256'},b,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function verifyHash(password,salt){let b=await crypto.subtle.importKey('raw',new TextEncoder().encode(password),'PBKDF2',false,['deriveBits']);let bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt,iterations:150000,hash:'SHA-256'},b,256);return btoa(String.fromCharCode(...new Uint8Array(bits)))}
+async function enc(obj,key=cryptoKey){let iv=crypto.getRandomValues(new Uint8Array(12));let ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(JSON.stringify(obj)));return {iv:btoa(String.fromCharCode(...iv)),ct:btoa(String.fromCharCode(...new Uint8Array(ct)))}}
+async function dec(data,key=cryptoKey){let iv=Uint8Array.from(atob(data.iv),c=>c.charCodeAt(0)),ct=Uint8Array.from(atob(data.ct),c=>c.charCodeAt(0));let p=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,ct);return JSON.parse(new TextDecoder().decode(p))}
+async function configGet(key){let a=(await getAll('config')).find(x=>x.key===key);return a?.value}
+async function configSet(key,value){await put('config',{id:key,key,value})}
+
+async function init(){
+ await openDB(); let adm=(await getAll('usuarios')).find(u=>u.login==='admin');
+ if(!adm){$('first-access').classList.remove('hidden');$('login-access').classList.add('hidden');$('login-msg').textContent='Primeiro acesso: crie o administrador. Os dados sensíveis serão cifrados.'}
+ else $('login-msg').textContent='Entre com seu usuário e senha.';
+}
+async function setupAdmin(){
+ let name=$('adm-name').value.trim(), login=$('adm-user').value.trim().toLowerCase(), p=$('adm-pass').value, p2=$('adm-pass2').value;
+ if(!name||!login||p.length<8||p!==p2)return $('login-msg').textContent='Preencha corretamente. A senha precisa ter pelo menos 8 caracteres.';
+ let salt=crypto.getRandomValues(new Uint8Array(16)), hash=await verifyHash(p,salt), userKey=await derive(p,salt);
+ masterSecret=btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32))));
+ let mSaltBytes=crypto.getRandomValues(new Uint8Array(16)); masterSalt=btoa(String.fromCharCode(...mSaltBytes));
+ masterKey=userKey; cryptoKey=await derive(masterSecret,mSaltBytes);
+ let encrypted=await enc({secret:'ASV-MASTER',master:masterSecret,msalt:masterSalt,createdAt:new Date().toISOString()},userKey);
+ await put('usuarios',{id:uid(),nome:name,login,hash,salt:btoa(String.fromCharCode(...salt)),perfil:'admin',ativo:1,perms:DEFAULT_PERMS.admin,enc:encrypted});
+ await log('CREATE','usuario',null,{login,perfil:'admin'}); location.reload();
+}
+async function doLogin(){
+ let login=$('login-user').value.trim().toLowerCase(), p=$('login-pass').value;
+ let u=(await getAll('usuarios')).find(x=>x.login===login&&x.ativo);
+ if(!u)return $('login-msg').textContent='Usuário não encontrado ou inativo.';
+ let salt=Uint8Array.from(atob(u.salt),c=>c.charCodeAt(0)), h=await verifyHash(p,salt); if(h!==u.hash)return $('login-msg').textContent='Senha inválida.';
+ try{
+   let userKey=await derive(p,salt); let payload=await dec(u.enc,userKey); masterKey=userKey;
+   if(payload?.master&&payload?.msalt){masterSecret=payload.master;masterSalt=payload.msalt;cryptoKey=await derive(masterSecret,Uint8Array.from(atob(masterSalt),c=>c.charCodeAt(0)));}
+   else {cryptoKey=userKey;}
+ }catch(e){return $('login-msg').textContent='Não foi possível abrir os dados criptografados.'}
+ session={...u}; $('login').classList.add('hidden');$('app').classList.remove('hidden');$('user-name').textContent=u.nome;$('user-role').textContent=u.perfil;
+ renderNav(); openPage('dashboard'); await log('LOGIN','sessao',null,{login}); 
+}
+function logout(){session=null;cryptoKey=null;masterKey=null;masterSecret=null;masterSalt=null;window._cart=[];$('app').classList.add('hidden');$('login').classList.remove('hidden');$('login-access').classList.remove('hidden');$('first-access').classList.add('hidden');}
+function allowed(p){return !!session?.perms?.[p] || session?.perfil==='admin'}
+function renderNav(){$('nav').innerHTML=PAGES.filter(x=>allowed(x[0])).map(x=>`<button data-page="${x[0]}" onclick="openPage('${x[0]}')">${x[1]}</button>`).join('')}
+async function openPage(page){
+ if(!allowed(page))return toast('Sem permissão para esta guia.','bad');
+ currentPage=page; document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
+ const meta=PAGES.find(x=>x[0]===page); $('pageTitle').textContent=meta?.[1]?.replace(/^[^ ]+ /,'')||page;
+ $('pageSub').textContent=''; 
+ ({dashboard:renderDashboard,clientes:renderClientes,produtos:renderProdutos,estoque:renderEstoque,transferencias:renderTransferencias,pdv:renderPDV,caixa:renderCaixa,financeiro:renderFinanceiro,relatorios:renderRelatorios,usuarios:renderUsuarios,logs:renderLogs,config:renderConfig})[page]();
+}
+function toast(msg,type='ok'){let d=$('content'); if(!d)return; let n=document.createElement('div');n.className='card';n.textContent=msg;n.style.borderLeft=`5px solid ${type==='bad'?'var(--bad)':'var(--ok)'}`;d.prepend(n);setTimeout(()=>n.remove(),2800)}
+function stats(arr,prop){return arr.reduce((s,x)=>s+Number(x[prop]||0),0)}
+
+async function renderDashboard(){
+ let [prod,lotes,vendas,fin,caixas]=await Promise.all([getAll('produtos'),getAll('lotes'),getAll('vendas'),getAll('financeiro'),getAll('caixas')]);
+ let qtd=stats(lotes,'qtd'), totalV=stats(vendas,'total'), pendP=fin.filter(x=>x.tipo==='Pagar'&&x.status==='Pendente').reduce((s,x)=>s+Number(x.valor),0), caixa=caixas.find(x=>x.status==='aberto');
+ $('content').innerHTML=`<div class="kpis">
+ <div class="kpi"><div class="label">Produtos</div><div class="v">${prod.length}</div></div><div class="kpi"><div class="label">Saldo físico (un.)</div><div class="v">${qtd}</div></div>
+ <div class="kpi"><div class="label">Vendas acumuladas</div><div class="v">${money(totalV)}</div></div><div class="kpi"><div class="label">Contas a pagar</div><div class="v">${money(pendP)}</div></div>
+ <div class="kpi"><div class="label">Caixa atual</div><div class="v">${caixa?money(caixa.saldoInicial):'Fechado'}</div></div></div>
+ <div class="card"><div class="toolbar"><h3>Operação rápida</h3><div class="toolbar-right">${allowed('clientes')?'<button class="btn primary" onclick="openForm(\'cliente\')">+ Novo Cliente</button>':''}${allowed('produtos')?'<button class="btn primary" onclick="openForm(\'produto\')">+ Novo Produto</button>':''}${allowed('estoque')?'<button class="btn ok" onclick="openEntryScanner()">+ Entrada por bipagem</button>':''}${allowed('pdv')?'<button class="btn warn" onclick="openPage(\'pdv\')">Abrir PDV</button>':''}</div></div>
+ <div class="notice">O botão <b>Novo Registro</b> usa parâmetros de formulário por módulo. Isso permite adicionar campos sem duplicar a lógica da janela.</div></div>`;
+}
+
+function setTableState(key,list){
+  const old=tableState[key]||{};
+  tableState[key]={...old,list,page:Math.min(old.page||1,Math.max(1,Math.ceil(list.length/(old.size||10))))};
+  if(!tableState[key].size)tableState[key].size=10;
+}
+function pageItems(key){
+  const s=tableState[key]||{list:[],page:1,size:10};
+  const pages=Math.max(1,Math.ceil(s.list.length/s.size));
+  s.page=Math.max(1,Math.min(s.page,pages));
+  const from=(s.page-1)*s.size;
+  return {rows:s.list.slice(from,from+s.size),page:s.page,pages,total:s.list.length,from,to:Math.min(from+s.size,s.list.length)};
+}
+function paginationHTML(key){
+  const s=tableState[key]||{page:1,size:10,list:[]}, p=pageItems(key);
+  let btns='';
+  for(let i=1;i<=p.pages;i++) if(p.pages<=7||i===1||i===p.pages||Math.abs(i-s.page)<=1) btns+=`<button class="${i===s.page?'active':''}" onclick="setPage('${key}',${i})">${i}</button>${(i===1&&s.page>3)?'<span>…</span>':''}${(i===p.pages-1&&s.page<p.pages-2)?'<span>…</span>':''}`;
+  return `<div class="pager"><div class="pager-left"><span class="muted">Mostrando ${p.total?p.from+1:0}–${p.to} de ${p.total}</span><label class="muted">Itens/página <select onchange="setPageSize('${key}',this.value)"><option ${s.size===10?'selected':''}>10</option><option ${s.size===25?'selected':''}>25</option><option ${s.size===50?'selected':''}>50</option><option ${s.size===100?'selected':''}>100</option></select></label></div><div class="pager-right"><button onclick="setPage('${key}',1)">«</button><button onclick="setPage('${key}',${Math.max(1,s.page-1)})">‹</button>${btns}<button onclick="setPage('${key}',${Math.min(p.pages,s.page+1)})">›</button><button onclick="setPage('${key}',${p.pages})">»</button></div></div>`;
+}
+function setPage(key,page){tableState[key].page=Number(page)||1; tableState[key].draw?.(); document.querySelector(`[data-table-anchor="${key}"]`)?.scrollIntoView({block:'nearest'});}
+function setPageSize(key,size){tableState[key].size=Number(size)||10;tableState[key].page=1;tableState[key].draw?.();}
+function tableActions(store,id,kind=''){return `<div class="table-actions">${kind?`<button class="btn light" onclick="editRecord('${store}','${id}','${kind}')">Alterar</button>`:''}<button class="btn bad" onclick="deleteRecord('${store}','${id}')">Excluir</button></div>`}
+async function deleteRecord(store,id){
+  if(store==='usuarios'&&session?.id===id)return toast('Não é permitido excluir o usuário conectado.','bad');
+  if(!confirm('Confirma a exclusão deste registro?'))return;
+  const list=await getAll(store), old=list.find(x=>x.id===id); if(!old)return;
+  await del(store,id); await log('DELETE',store,old,null); toast('Registro excluído.'); await openPage(currentPage);
+}
+function filterValue(id){return $(id)?.value?.trim().toLowerCase()||''}
+function dateInRange(value,from,to){if(!value)return true;let d=String(value).slice(0,10);return (!from||d>=from)&&(!to||d<=to)}
+
+async function renderClientes(){
+  let list=await getAll('clientes');
+  $('content').innerHTML=`<div class="card"><div class="toolbar"><div><h3 style="margin:0">Clientes</h3><small class="muted">${list.length} registros</small></div><div class="toolbar-right"><button class="btn primary" onclick="openForm('cliente')">+ Novo Registro</button></div></div>
+  <div class="table-filters"><div class="group"><label>Busca geral</label><input id="cl-q" placeholder="Nome, CPF, telefone..." oninput="applyClientesFilter()"></div><div class="group"><label>Cidade</label><input id="cl-city" placeholder="Cidade" oninput="applyClientesFilter()"></div><div class="group"><label>UF</label><input id="cl-uf" maxlength="2" placeholder="UF" oninput="applyClientesFilter()"></div><button class="btn light" onclick="document.querySelectorAll('#cl-q,#cl-city,#cl-uf').forEach(x=>x.value='');applyClientesFilter()">Limpar</button></div>
+  <div data-table-anchor="clientes" id="clientesTable"></div></div>`;
+  function draw(){
+    tableState.clientes.draw=draw; let {rows}=pageItems('clientes');
+    $('clientesTable').innerHTML=`<table><thead><tr><th>Nome</th><th>CPF</th><th>Telefone</th><th>Cidade/UF</th><th>Ações</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.nome)}</td><td>${esc(x.cpf)}</td><td>${esc(x.telefone)}</td><td>${esc(x.cidade)} / ${esc(x.uf)}</td><td>${tableActions('clientes',x.id,'cliente')}</td></tr>`).join('')}</tbody></table>${paginationHTML('clientes')}`;
+  }
+  window._clientesBase=list; tableState.clientes={size:10,page:1,list,draw}; draw();
+}
+function applyClientesFilter(){let q=filterValue('cl-q'),city=filterValue('cl-city'),uf=filterValue('cl-uf');let a=(_clientesBase||[]).filter(x=>(!q||JSON.stringify(x).toLowerCase().includes(q))&&(!city||String(x.cidade||'').toLowerCase().includes(city))&&(!uf||String(x.uf||'').toLowerCase()===uf));setTableState('clientes',a);tableState.clientes.draw?.()}
+
+async function renderProdutos(){
+  let list=await getAll('produtos');
+  let cats=[...new Set(list.map(x=>x.categoria).filter(Boolean))].sort();
+  $('content').innerHTML=`<div class="card"><div class="toolbar"><h3>Produtos</h3><div class="toolbar-right"><button class="btn primary" onclick="openForm('produto')">+ Novo Registro</button></div></div>
+  <div class="table-filters"><div class="group"><label>Busca</label><input id="pr-q" placeholder="Código, barras, descrição..." oninput="applyProdutosFilter()"></div><div class="group"><label>Categoria</label><select id="pr-cat" onchange="applyProdutosFilter()"><option value="">Todas</option>${cats.map(c=>`<option>${esc(c)}</option>`).join('')}</select></div><div class="group"><label>Status</label><select id="pr-status" onchange="applyProdutosFilter()"><option value="">Todos</option><option value="1">Ativo</option><option value="0">Inativo</option></select></div><button class="btn light" onclick="['pr-q','pr-cat','pr-status'].forEach(id=>$(id).value='');applyProdutosFilter()">Limpar</button></div>
+  <div data-table-anchor="produtos" id="prodTable"></div></div>`;
+  window._prodBase=list;
+  function draw(){tableState.produtos.draw=draw;let {rows}=pageItems('produtos');$('prodTable').innerHTML=`<table><thead><tr><th>Código</th><th>Barras</th><th>Descrição</th><th>Categoria</th><th>Compra</th><th>Venda</th><th>Status</th><th>Ações</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.cod)}</td><td>${esc(x.codigoBarras||'—')}</td><td>${esc(x.descricao)}</td><td>${esc(x.categoria)}</td><td>${money(x.vCompra)}</td><td>${money(x.vVenda)}</td><td><span class="tag ${x.ativo?'ok':'bad'}">${x.ativo?'Ativo':'Inativo'}</span></td><td>${tableActions('produtos',x.id,'produto')}</td></tr>`).join('')}</tbody></table>${paginationHTML('produtos')}`}
+  tableState.produtos={size:10,page:1,list,draw};draw();
+}
+function applyProdutosFilter(){let q=filterValue('pr-q'),cat=$('pr-cat')?.value||'',st=$('pr-status')?.value||'';let a=(_prodBase||[]).filter(x=>(!q||JSON.stringify(x).toLowerCase().includes(q))&&(!cat||x.categoria===cat)&&(!st||String(Number(x.ativo))===st));setTableState('produtos',a);tableState.produtos.draw?.()}
+
+async function renderEstoque(){
+  let [prod,lotes]=await Promise.all([getAll('produtos'),getAll('lotes')]), map={};lotes.forEach(l=>{let k=l.produtoCod;map[k]??={qtd:0,lotes:[]};map[k].qtd+=Number(l.qtd);map[k].lotes.push(l)});
+  let base=prod.map(p=>{let s=map[p.cod]||{qtd:0,lotes:[]};let ls=s.lotes.filter(x=>x.qtd>0&&x.vencimento).sort((a,b)=>a.vencimento.localeCompare(b.vencimento));let next=ls[0]?.vencimento||'';let days=next?Math.ceil((new Date(next)-new Date(today()))/864e5):null;let status=days===null?'SEM VALIDADE':days<0?'VENCIDO':days<=30?'A VENCER':'OK';return {...p,saldo:s.qtd,next,days,status,lotes:s.lotes}});
+  $('content').innerHTML=`<div class="card"><div class="toolbar"><h3>Estoque / FEFO</h3><div class="toolbar-right"><button class="btn ok" onclick="openForm('entrada')">+ Novo Registro</button><button class="btn light" onclick="openInventory()">Inventário</button></div></div><div class="notice">FEFO aplicado na baixa: entre os lotes com saldo, o sistema utiliza primeiro o vencimento mais próximo.</div>
+  <div class="table-filters"><div class="group"><label>Busca</label><input id="es-q" placeholder="Código ou produto..." oninput="applyEstoqueFilter()"></div><div class="group"><label>Status estoque</label><select id="es-status" onchange="applyEstoqueFilter()"><option value="">Todos</option><option>OK</option><option>A VENCER</option><option>VENCIDO</option><option>SEM VALIDADE</option></select></div><div class="group"><label>Saldo</label><select id="es-saldo" onchange="applyEstoqueFilter()"><option value="">Todos</option><option value="0">Zerado</option><option value="low">Até o mínimo</option><option value="pos">Com saldo</option></select></div><button class="btn light" onclick="['es-q','es-status','es-saldo'].forEach(id=>$(id).value='');applyEstoqueFilter()">Limpar</button></div><div data-table-anchor="estoque" id="estoqueTable"></div></div>`;
+  window._estoqueBase=base;
+  function draw(){tableState.estoque.draw=draw;let {rows}=pageItems('estoque');$('estoqueTable').innerHTML=`<table><thead><tr><th>Código</th><th>Produto</th><th>Saldo</th><th>Próx. venc.</th><th>Status</th><th>Ações</th></tr></thead><tbody>${rows.map(x=>`<tr class="${x.status==='VENCIDO'?'expired':x.status==='A VENCER'?'soon':''}"><td>${esc(x.cod)}</td><td>${esc(x.descricao)}</td><td>${x.saldo}</td><td>${x.next?new Date(x.next).toLocaleDateString('pt-BR'):'—'}</td><td><span class="tag ${x.status==='OK'?'ok':x.status==='A VENCER'?'warn':'bad'}">${x.status}</span></td><td><button class="btn light" onclick="showLots('${String(x.cod).replace(/'/g,"\\'")}')">Lotes</button></td></tr>`).join('')}</tbody></table>${paginationHTML('estoque')}`}
+  tableState.estoque={size:10,page:1,list:base,draw};draw();
+}
+function applyEstoqueFilter(){let q=filterValue('es-q'),st=$('es-status')?.value||'',sa=$('es-saldo')?.value||'';let a=(_estoqueBase||[]).filter(x=>(!q||`${x.cod} ${x.descricao}`.toLowerCase().includes(q))&&(!st||x.status===st)&&(!sa||(sa==='0'&&x.saldo===0)||(sa==='pos'&&x.saldo>0)||(sa==='low'&&x.saldo<=Number(x.estoqueMin||0))));setTableState('estoque',a);tableState.estoque.draw?.()}
+
+
+async function showLots(cod){
+  let p=(await getAll('produtos')).find(x=>x.cod===cod), allLots=(await getAll('lotes')).filter(x=>x.produtoCod===cod).sort((a,b)=>String(a.vencimento||'9999-12-31').localeCompare(String(b.vencimento||'9999-12-31')));
+  modalSpec={title:`Lotes — ${p?.descricao||cod}`,store:null,fields:[]};
+  $('modalTitle').textContent=modalSpec.title;
+  $('modalBody').innerHTML=`<div class="toolbar"><div><b>${esc(p?.descricao||cod)}</b><br><small class="muted">Código: ${esc(cod)}</small></div><button type="button" class="btn ok" onclick="closeModal();openForm('entrada')">+ Nova entrada</button></div><div data-table-anchor="lotesModal" id="lotsTable"></div>`;
+  $('modalForm').onsubmit=e=>{e.preventDefault();closeModal()};$('modal').classList.add('active');
+  function draw(){
+    tableState.lotesModal.draw=draw;
+    let {rows}=pageItems('lotesModal');
+    $('lotsTable').innerHTML=`<table><thead><tr><th>Lote</th><th>Estoque</th><th>Qtd</th><th>Vencimento</th><th>Status</th><th>Ações</th></tr></thead><tbody>${rows.map(x=>{let sv=!x.vencimento;let d=sv?null:Math.ceil((new Date(x.vencimento)-new Date(today()))/864e5);return `<tr><td>${esc(x.lote||'—')}</td><td>${esc(x.estoque)}</td><td>${x.qtd}</td><td>${sv?'—':new Date(x.vencimento).toLocaleDateString('pt-BR')}</td><td>${sv?'<span class="tag">Não perecível</span>':d<0?'<span class="tag bad">Vencido</span>':d<=30?'<span class="tag warn">A vencer</span>':'<span class="tag ok">OK</span>'}</td><td><div class="table-actions"><button class="btn light" onclick="editRecord('lotes','${x.id}','entrada')">Alterar</button><button class="btn warn" onclick="estornarLote('${x.id}')">Estornar</button><button class="btn bad" onclick="deleteRecord('lotes','${x.id}')">Excluir</button></div></td></tr>`}).join('')}</tbody></table>${paginationHTML('lotesModal')}`;
+  }
+  tableState.lotesModal={size:10,page:1,list:allLots,draw};draw();
+}
+
+async function renderTransferencias(){
+  let list=(await getAll('transferencias')).sort((a,b)=>b.ts.localeCompare(a.ts));
+  $('content').innerHTML=`<div class="card"><div class="toolbar"><h3>Transferências entre estoques</h3><button class="btn primary" onclick="openForm('transferencia')">+ Novo Registro</button></div>
+  <div class="table-filters"><div class="group"><label>Busca</label><input id="tr-q" placeholder="Produto, lote..." oninput="applyTransferFilter()"></div><div class="group"><label>Origem</label><input id="tr-orig" oninput="applyTransferFilter()"></div><div class="group"><label>Destino</label><input id="tr-dest" oninput="applyTransferFilter()"></div><div class="group"><label>Data inicial</label><input id="tr-from" type="date" onchange="applyTransferFilter()"></div><div class="group"><label>Data final</label><input id="tr-to" type="date" onchange="applyTransferFilter()"></div><button class="btn light" onclick="['tr-q','tr-orig','tr-dest','tr-from','tr-to'].forEach(id=>$(id).value='');applyTransferFilter()">Limpar</button></div><div data-table-anchor="transferencias" id="transferTable"></div></div>`;
+  window._transferBase=list;
+  function draw(){tableState.transferencias.draw=draw;let {rows}=pageItems('transferencias');$('transferTable').innerHTML=`<table><thead><tr><th>Data</th><th>Produto</th><th>Qtd</th><th>Origem</th><th>Destino</th><th>Lote</th><th>Ações</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${new Date(x.ts).toLocaleString('pt-BR')}</td><td>${esc(x.produtoCod)}</td><td>${x.qtd}</td><td>${esc(x.origem)}</td><td>${esc(x.destino)}</td><td>${esc(x.lote||'—')}</td><td>${tableActions('transferencias',x.id,'transferencia')}</td></tr>`).join('')}</tbody></table>${paginationHTML('transferencias')}`}
+  tableState.transferencias={size:10,page:1,list,draw};draw();
+}
+function applyTransferFilter(){let q=filterValue('tr-q'),o=filterValue('tr-orig'),d=filterValue('tr-dest');let a=(_transferBase||[]).filter(x=>(!q||JSON.stringify(x).toLowerCase().includes(q))&&(!o||String(x.origem).toLowerCase().includes(o))&&(!d||String(x.destino).toLowerCase().includes(d))&&dateInRange(x.ts,filterValue('tr-from'),filterValue('tr-to')));setTableState('transferencias',a);tableState.transferencias.draw?.()}
+
+
+async function stockForProduct(cod){
+  let lotes=await getAll('lotes');
+  return lotes.filter(l=>l.produtoCod===cod).reduce((s,l)=>s+Number(l.qtd||0),0);
+}
+async function renderPDV(){
+  let [prod,clientes]=await Promise.all([(getAll('produtos')).then(a=>a.filter(p=>p.ativo)),getAll('clientes')]);
+  $('content').innerHTML=`<div class="pdv">
+  <div class="card"><div class="toolbar"><h3>PDV / Venda</h3><span id="pdvCount" class="muted">0 itens</span></div>
+  <div class="cart-hero"><svg viewBox="0 0 120 120" aria-hidden="true"><path d="M14 20h10l9 50h55l13-37H34" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="47" cy="92" r="8" fill="currentColor"/><circle cx="91" cy="92" r="8" fill="currentColor"/><path d="M46 33h43M51 46h35M56 59h27" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg><div><strong>Seu carrinho de compras</strong><div class="muted">Informe o produto e a quantidade. O estoque é validado antes da inclusão.</div></div></div>
+  <div class="pdv-entry"><div class="group"><label>Produto / código de barras</label><input id="pdvCode" onkeydown="if(event.key==='Enter'){event.preventDefault();addPDV()}" placeholder="Código, código de barras ou descrição"></div><div class="group"><label>Quantidade</label><input id="pdvQty" type="number" min="1" step="1" value="1" onkeydown="if(event.key==='Enter'){event.preventDefault();addPDV()}"></div><button class="btn primary" onclick="addPDV()">Adicionar</button></div>
+  <div id="cart" style="margin-top:12px"></div></div>
+  <div class="card"><div class="group"><label>Cliente da venda</label><div style="display:grid;grid-template-columns:120px 1fr;gap:6px;margin-bottom:6px"><select id="pdvClientMode" onchange="filterPdvClients()"><option value="ambos">CPF ou Nome</option><option value="cpf">CPF</option><option value="nome">Nome</option></select><input id="pdvClientFilter" placeholder="Filtrar cliente por CPF ou nome..." oninput="filterPdvClients()"></div><select id="pdvClient"><option value="">Consumidor final</option>${clientes.map(c=>`<option value="${c.id}">${esc(c.nome)}${c.cpf?` — ${esc(c.cpf)}`:''}</option>`).join('')}</select><small id="pdvClientCount" class="muted">${clientes.length} clientes</small></div>
+  <div class="discount-box"><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="useDiscount" onchange="drawCart()"> Aplicar desconto</label><div class="grid" id="discountFields" style="margin-top:8px;display:none"><div class="group"><label>Tipo</label><select id="discountType" onchange="drawCart()"><option value="percent">Percentual (%)</option><option value="value">Valor (R$)</option></select></div><div class="group"><label>Desconto</label><input id="discountValue" type="number" min="0" step=".01" value="0" oninput="drawCart()"></div></div></div>
+  <div class="kpi" style="margin-top:12px"><div class="label">Subtotal</div><div class="v" id="pdvSubtotal">R$ 0,00</div><div class="label" id="pdvDiscountLabel"></div><div class="total" id="pdvTotal">R$ 0,00</div></div>
+  ${allowed('caixa')?'<button class="btn warn" style="width:100%" onclick="startSale()">Finalizar / Receber</button>':'<div class="notice">Seu perfil não possui permissão para concluir vendas.</div>'}<button class="btn secondary" style="width:100%;margin-top:8px" onclick="clearPDV()">Cancelar</button></div></div>`;
+  window._pdvProducts=prod;window._pdvClients=clientes;window._cart=window._cart||[];drawCart();
+}
+function filterPdvClients(){
+  const sel=$('pdvClient'); if(!sel)return;
+  const raw=($('pdvClientFilter')?.value||'').trim().toLowerCase(), mode=$('pdvClientMode')?.value||'ambos';
+  const digits=raw.replace(/\D/g,''), cur=sel.value;
+  const list=(window._pdvClients||[]).filter(c=>{
+    if(!raw)return true;
+    const nome=String(c.nome||'').toLowerCase(), cpf=String(c.cpf||'').replace(/\D/g,'');
+    const byNome=nome.includes(raw), byCpf=digits?cpf.includes(digits):String(c.cpf||'').toLowerCase().includes(raw);
+    return mode==='cpf'?byCpf:mode==='nome'?byNome:(byNome||byCpf);
+  });
+  sel.innerHTML=`<option value="">Consumidor final</option>`+list.map(c=>`<option value="${c.id}">${esc(c.nome)}${c.cpf?` — ${esc(c.cpf)}`:''}</option>`).join('');
+  if(list.some(c=>c.id===cur))sel.value=cur;
+  if($('pdvClientCount'))$('pdvClientCount').textContent=`${list.length} cliente(s) encontrado(s)`;
+}
+
+async function addPDV(){
+  let code=$('pdvCode').value.trim(), qty=Math.floor(Number($('pdvQty').value)||0);
+  if(!code)return toast('Informe o produto ou código de barras.','bad');
+  if(qty<1)return toast('A quantidade deve ser maior que zero.','bad');
+  let p=(window._pdvProducts||[]).find(x=>x.cod===code||x.codigoBarras===code||(String(x.descricao||'').toLowerCase().includes(code.toLowerCase())));
+  if(!p)return toast('Produto não encontrado.','bad');
+  let stock=await stockForProduct(p.cod),it=window._cart.find(x=>x.cod===p.cod),already=it?Number(it.qtd):0;
+  if(stock<=0)return toast(`Produto "${p.descricao}" sem estoque disponível.`,'bad');
+  if(already+qty>stock)return toast(`Estoque insuficiente para ${p.descricao}. Disponível: ${stock}. Já no carrinho: ${already}.`,'bad');
+  if(it)it.qtd+=qty;else window._cart.push({...p,qtd:qty});
+  $('pdvCode').value='';$('pdvQty').value='1';drawCart();
+}
+function getDiscount(sub){
+  if(!$('useDiscount')?.checked)return {value:0,type:'none',input:0};
+  let v=Math.max(0,Number($('discountValue')?.value)||0),type=$('discountType')?.value||'percent';
+  let value=type==='percent'?Math.min(sub,sub*v/100):Math.min(sub,v);return {value,type,input:v};
+}
+function drawCart(){
+  let c=window._cart||[], subtotal=c.reduce((s,x)=>s+Number(x.qtd)*Number(x.vVenda),0),disc=getDiscount(subtotal),total=Math.max(0,subtotal-disc.value);
+  if($('pdvCount'))$('pdvCount').textContent=c.reduce((s,x)=>s+x.qtd,0)+' itens';
+  if($('discountFields'))$('discountFields').style.display=$('useDiscount')?.checked?'grid':'none';
+  if($('cart'))$('cart').innerHTML=`<table><thead><tr><th>Qtd</th><th>Produto</th><th>Unit.</th><th>Total</th><th></th></tr></thead><tbody>${c.map((x,i)=>`<tr><td class="qty-cell"><input type="number" min="1" step="1" value="${x.qtd}" onchange="changeCartQty(${i},this.value)"></td><td>${esc(x.descricao)}</td><td>${money(x.vVenda)}</td><td>${money(x.qtd*x.vVenda)}</td><td><button class="btn bad" onclick="removeCartItem(${i})">×</button></td></tr>`).join('')||'<tr><td colspan="5" class="muted">Carrinho vazio.</td></tr>'}</tbody></table>`;
+  if($('pdvSubtotal'))$('pdvSubtotal').textContent=money(subtotal);
+  if($('pdvDiscountLabel'))$('pdvDiscountLabel').textContent=disc.value>0?`Desconto aplicado: − ${money(disc.value)}`:'';
+  if($('pdvTotal'))$('pdvTotal').textContent=money(total);
+}
+async function changeCartQty(i,val){
+  let qty=Math.floor(Number(val)||0);if(qty<1)return drawCart();let it=window._cart[i],stock=await stockForProduct(it.cod);
+  if(qty>stock)return toast(`Estoque insuficiente para ${it.descricao}. Disponível: ${stock}.`,'bad');it.qtd=qty;drawCart()
+}
+function removeCartItem(i){window._cart.splice(i,1);drawCart()}
+function clearPDV(){window._cart=[];if($('pdvClient'))$('pdvClient').value='';if($('useDiscount'))$('useDiscount').checked=false;if($('discountValue'))$('discountValue').value='0';drawCart()}
+async function startSale(){
+  if(!window._cart?.length)return toast('Carrinho vazio.','bad');
+  let caixa=(await getAll('caixas')).find(x=>x.status==='aberto');if(!caixa)return toast('Abra o caixa antes de vender.','bad');
+  let subtotal=window._cart.reduce((s,x)=>s+x.qtd*x.vVenda,0),disc=getDiscount(subtotal);
+  pendingSale={items:JSON.parse(JSON.stringify(window._cart)),subtotal,discount:disc,total:Math.max(0,subtotal-disc.value),caixaId:caixa.id,clienteId:$('pdvClient')?.value||null};
+  $('payTotal').textContent=money(pendingSale.total);$('paymentRows').innerHTML='';addPaymentRow();updatePayments();$('paymentModal').classList.add('active');
+}
+function closePayment(){$('paymentModal').classList.remove('active')}
+function addPaymentRow(){let d=document.createElement('div');d.className='card';d.innerHTML=`<div class="grid"><div class="group"><label>Forma</label><select class="pay-type">${PAY_TYPES.map(x=>`<option>${x}</option>`).join('')}</select></div><div class="group"><label>Valor</label><input class="pay-val" type="number" min="0" step=".01" oninput="updatePayments()"></div></div>`;$('paymentRows').appendChild(d);updatePayments()}
+const PAY_TYPES=['Dinheiro','PIX','Cartão de Débito','Cartão de Crédito','Boleto','Transferência','Fiado'];
+function updatePayments(){let vals=[...document.querySelectorAll('.pay-val')].map(x=>Number(x.value)||0),r=vals.reduce((a,b)=>a+b,0),t=pendingSale?.total||0;$('payReceived').textContent=money(r);$('payRemain').textContent=money(Math.max(t-r,0))}
+async function consumeFEFO(item,qty){
+  let lots=(await getAll('lotes')).filter(l=>l.produtoCod===item.cod&&Number(l.qtd)>0).sort((a,b)=>String(a.vencimento||'9999-12-31').localeCompare(String(b.vencimento||'9999-12-31')));
+  let remaining=qty,movements=[];for(const l of lots){if(remaining<=0)break;let take=Math.min(remaining,Number(l.qtd));l.qtd-=take;remaining-=take;movements.push({lot:l.id,qtd:take,vencimento:l.vencimento,lote:l.lote});await put('lotes',l)}if(remaining>0)throw new Error(`Estoque insuficiente para ${item.descricao}. Faltam ${remaining}.`);return movements;
+}
+async function finalizeSale(e){
+  e.preventDefault();let rows=[...document.querySelectorAll('#paymentRows .card')],pays=rows.map(r=>({forma:r.querySelector('.pay-type').value,valor:Number(r.querySelector('.pay-val').value)||0})).filter(x=>x.valor>0),sum=pays.reduce((s,x)=>s+x.valor,0);
+  if(sum+0.001<pendingSale.total)return toast('Pagamento inferior ao total.','bad');
+  let fefo=[];try{for(const item of pendingSale.items)fefo.push({cod:item.cod,descricao:item.descricao,qtd:item.qtd,lotes:await consumeFEFO(item,item.qtd)});}catch(err){return toast(err.message,'bad')}
+  let venda={id:uid(),ts:new Date().toISOString(),caixaId:pendingSale.caixaId,clienteId:pendingSale.clienteId||null,subtotal:pendingSale.subtotal,desconto:pendingSale.discount,total:pendingSale.total,itens:pendingSale.items,fefo,pagamentos:pays,obs:$('saleNote').value};
+  await put('vendas',venda);for(const pay of pays)await put('pagamentos',{id:uid(),vendaId:venda.id,...pay,ts:venda.ts});
+  let parcelas=Number($('payInstallments').value)||1;if(pays.some(p=>p.forma==='Cartão de Crédito')&&parcelas>1){let pc=pays.find(p=>p.forma==='Cartão de Crédito');for(let i=1;i<=parcelas;i++)await put('parcelas',{id:uid(),vendaId:venda.id,numero:i,total:parcelas,valor:pc.valor/parcelas,vencimento:new Date(Date.now()+i*30*864e5).toISOString().slice(0,10),status:'Pendente'})}
+  let cx=(await getAll('caixas')).find(x=>x.id===pendingSale.caixaId);cx.totalVendas=(cx.totalVendas||0)+pendingSale.total;cx.saldoAtual=(cx.saldoAtual||cx.saldoInicial)+pays.filter(p=>p.forma==='Dinheiro').reduce((s,x)=>s+x.valor,0);await put('caixas',cx);
+  await put('financeiro',{id:uid(),tipo:'Receber',descricao:`Venda ${venda.id.slice(0,8)}`,valor:pendingSale.total,vencimento:today(),status:'Pago',vendaId:venda.id});
+  await log('CREATE','venda',null,venda);closePayment();clearPDV();toast('Venda concluída com FEFO, cliente, desconto e pagamento registrados.');await openPage('pdv');
+}
+async function renderCaixa(){let caixas=await getAll('caixas');let open=caixas.find(x=>x.status==='aberto');let vendas=open?(await getAll('vendas')).filter(v=>v.caixaId===open.id):[];let din=vendas.flatMap(v=>v.pagamentos||[]).filter(p=>p.forma==='Dinheiro').reduce((s,p)=>s+p.valor,0);$('content').innerHTML=`<div class="card"><div class="toolbar"><h3>Fechamento de Caixa</h3>${open?`<button class="btn bad" onclick="closeCash('${open.id}')">Fechar Caixa</button>`:`<button class="btn ok" onclick="openCash()">Abrir Caixa</button>`}</div>${open?`<div class="kpis"><div class="kpi"><div class="label">Abertura</div><div class="v">${money(open.saldoInicial)}</div></div><div class="kpi"><div class="label">Vendas</div><div class="v">${money(open.totalVendas||0)}</div></div><div class="kpi"><div class="label">Dinheiro</div><div class="v">${money(din)}</div></div><div class="kpi"><div class="label">Saldo esperado</div><div class="v">${money((open.saldoInicial||0)+din)}</div></div></div>`:`<div class="notice">Nenhum caixa aberto.</div>`}</div>`}
+async function openCash(){if((await getAll('caixas')).some(x=>x.status==='aberto'))return toast('Já existe caixa aberto.','bad');let v=Number(prompt('Saldo inicial do caixa (R$):','0'));if(!Number.isFinite(v))return;await put('caixas',{id:uid(),abertoEm:new Date().toISOString(),abertoPor:session.login,saldoInicial:v,saldoAtual:v,totalVendas:0,status:'aberto'});await log('OPEN','caixa',null,{saldoInicial:v});await openPage('caixa')}
+async function closeCash(id){let c=(await getAll('caixas')).find(x=>x.id===id);let esperado=Number(c.saldoInicial||0), vendas=(await getAll('vendas')).filter(v=>v.caixaId===id);esperado+=vendas.flatMap(v=>v.pagamentos||[]).filter(p=>p.forma==='Dinheiro').reduce((s,p)=>s+p.valor,0);let contado=Number(prompt('Valor contado no caixa (R$):',esperado.toFixed(2)));if(!Number.isFinite(contado))return;c.saldoEsperado=esperado;c.valorContado=contado;c.diferenca=contado-esperado;c.fechadoEm=new Date().toISOString();c.fechadoPor=session.login;c.status='fechado';await put('caixas',c);await log('CLOSE','caixa',null,c);toast('Caixa fechado.');await openPage('caixa')}
+async function renderFinanceiro(){
+  let list=await getAll('financeiro');
+  $('content').innerHTML=`<div class="card"><div class="toolbar"><h3>Financeiro</h3><div class="toolbar-right"><button class="btn primary" onclick="openForm('financeiro')">+ Novo Registro</button><button class="btn secondary" onclick="baixarFinanceiro()">Baixar selecionados</button></div></div>
+  <div class="table-filters"><div class="group"><label>Busca</label><input id="fi-q" placeholder="Descrição..." oninput="applyFinanceFilter()"></div><div class="group"><label>Tipo</label><select id="fi-tipo" onchange="applyFinanceFilter()"><option value="">Todos</option><option>Pagar</option><option>Receber</option></select></div><div class="group"><label>Status</label><select id="fi-status" onchange="applyFinanceFilter()"><option value="">Todos</option><option>Pendente</option><option>Pago</option><option>Cancelado</option></select></div><div class="group"><label>Vencimento de</label><input id="fi-from" type="date" onchange="applyFinanceFilter()"></div><div class="group"><label>até</label><input id="fi-to" type="date" onchange="applyFinanceFilter()"></div><button class="btn light" onclick="['fi-q','fi-tipo','fi-status','fi-from','fi-to'].forEach(id=>$(id).value='');applyFinanceFilter()">Limpar</button></div><div class="kpis" style="margin-bottom:12px"><div class="kpi"><div class="label">Total a receber (filtrado)</div><div class="v" id="finTotalReceber">R$ 0,00</div></div></div><div data-table-anchor="financeiro" id="finTable"></div></div>`;
+  window._finBase=list;
+  function draw(){tableState.financeiro.draw=draw;updateFinTotalReceber();let {rows}=pageItems('financeiro');$('finTable').innerHTML=`<table><thead><tr><th><input type="checkbox" id="allFin" onclick="document.querySelectorAll('.fincheck').forEach(c=>c.checked=this.checked)"></th><th>Tipo</th><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead><tbody>${rows.map(x=>`<tr><td><input type="checkbox" class="fincheck" data-id="${x.id}" ${x.status!=='Pendente'?'disabled':''}></td><td>${x.tipo}</td><td>${esc(x.descricao)}</td><td>${new Date(x.vencimento).toLocaleDateString('pt-BR')}</td><td>${money(x.valor)}</td><td><span class="tag ${x.status==='Pago'?'ok':x.vencimento<today()?'bad':'warn'}">${x.status==='Pendente'&&x.vencimento<today()?'Vencido':x.status}</span></td><td>${tableActions('financeiro',x.id,'financeiro')}</td></tr>`).join('')}</tbody></table>${paginationHTML('financeiro')}`}
+  tableState.financeiro={size:10,page:1,list,draw};draw();
+}
+function updateFinTotalReceber(){let el=$('finTotalReceber');if(!el)return;let l=(tableState.financeiro?.list)||[];el.textContent=money(l.filter(x=>x.tipo==='Receber'&&x.status!=='Cancelado').reduce((s,x)=>s+Number(x.valor||0),0))}
+function applyFinanceFilter(){let q=filterValue('fi-q'),t=$('fi-tipo')?.value||'',st=$('fi-status')?.value||'';let a=(_finBase||[]).filter(x=>(!q||String(x.descricao).toLowerCase().includes(q))&&(!t||x.tipo===t)&&(!st||x.status===st)&&dateInRange(x.vencimento,filterValue('fi-from'),filterValue('fi-to')));setTableState('financeiro',a);tableState.financeiro.draw?.()}
+async function baixarFinanceiro(){let sel=[...document.querySelectorAll('.fincheck:checked')];if(!sel.length)return toast('Selecione ao menos um registro pendente.','bad');let all=await getAll('financeiro');let n=0;for(const x of sel){let o=all.find(z=>z.id===x.dataset.id);if(o&&o.status==='Pendente'){let b={...o};o.status='Pago';o.baixaEm=new Date().toISOString();await put('financeiro',o);await log('UPDATE','financeiro',b,o);n++}}toast(n?`Baixas concluídas (${n}).`:'Nenhum registro pendente selecionado.',n?'ok':'bad');await openPage('financeiro')}
+
+async function renderRelatorios(){
+  let [v,cx,l,logs]=await Promise.all([getAll('vendas'),getAll('caixas'),getAll('lotes'),getAll('logs')]);let total=stats(v,'total');
+  $('content').innerHTML=`<div class="kpis"><div class="kpi"><div class="label">Vendas</div><div class="v">${money(total)}</div></div><div class="kpi"><div class="label">Pedidos</div><div class="v">${v.length}</div></div><div class="kpi"><div class="label">Caixas fechados</div><div class="v">${cx.filter(x=>x.status==='fechado').length}</div></div><div class="kpi"><div class="label">Eventos auditados</div><div class="v">${logs.length}</div></div></div><div class="card"><div class="toolbar"><h3>Relatório FEFO — próximos vencimentos</h3><button class="btn primary" onclick="print()">Imprimir</button></div>
+  <div class="table-filters"><div class="group"><label>Busca</label><input id="re-q" placeholder="Produto ou lote..." oninput="applyRelFilter()"></div><div class="group"><label>Vencimento de</label><input id="re-from" type="date" onchange="applyRelFilter()"></div><div class="group"><label>até</label><input id="re-to" type="date" onchange="applyRelFilter()"></div><button class="btn light" onclick="['re-q','re-from','re-to'].forEach(id=>$(id).value='');applyRelFilter()">Limpar</button></div><div data-table-anchor="relatorios" id="reportTable"></div></div>
+  <div class="card"><div class="toolbar"><div><h3 style="margin:0">Relatórios detalhados por guia</h3><small class="muted">Clientes, Produtos, Estoque/FEFO, Transferências, PDV/Vendas, Fechamento de Caixa, Financeiro e Logs</small></div><div class="toolbar-right"><button class="btn ok" onclick="exportReportCSV()">⇩ CSV</button><button class="btn primary" onclick="printReport()">Imprimir</button></div></div>
+  <div class="table-filters"><div class="group"><label>Guia / relatório</label><select id="rp-type" onchange="generateReport()">${Object.entries(REPORT_DEFS).map(([k,d])=>`<option value="${k}">${d.title}</option>`).join('')}</select></div><div class="group"><label>Busca detalhada</label><input id="rp-q" placeholder="Qualquer campo..." oninput="generateReport()"></div><div class="group"><label>Período de</label><input id="rp-from" type="date" onchange="generateReport()"></div><div class="group"><label>até</label><input id="rp-to" type="date" onchange="generateReport()"></div><button class="btn light" onclick="['rp-q','rp-from','rp-to'].forEach(id=>$(id).value='');generateReport()">Limpar</button></div>
+  <div id="rpSummary" class="kpis" style="margin-bottom:12px"></div><div data-table-anchor="relDet" id="rpOut"></div></div>`;
+  window._relBase=l.filter(x=>x.qtd>0);
+  function draw(){tableState.relatorios.draw=draw;let {rows}=pageItems('relatorios');$('reportTable').innerHTML=`<table><thead><tr><th>Produto</th><th>Lote</th><th>Qtd</th><th>Vencimento</th><th>Ações</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.produtoCod)}</td><td>${esc(x.lote||'—')}</td><td>${x.qtd}</td><td>${x.vencimento?new Date(x.vencimento).toLocaleDateString('pt-BR'):'<span class="tag">Não perecível</span>'}</td><td><div class="table-actions"><button class="btn light" onclick="editRecord('lotes','${x.id}','entrada')">Alterar</button><button class="btn warn" onclick="estornarLote('${x.id}')">Estornar</button><button class="btn bad" onclick="deleteRecord('lotes','${x.id}')">Excluir</button></div></td></tr>`).join('')}</tbody></table>${paginationHTML('relatorios')}`}
+  tableState.relatorios={size:10,page:1,list:window._relBase,draw};draw();
+  await generateReport();
+}
+function applyRelFilter(){let q=filterValue('re-q');let a=(_relBase||[]).filter(x=>(!q||JSON.stringify(x).toLowerCase().includes(q))&&dateInRange(x.vencimento,filterValue('re-from'),filterValue('re-to')));setTableState('relatorios',a);tableState.relatorios.draw?.()}
+
+const dt=v=>v?new Date(v).toLocaleDateString('pt-BR'):'—';
+const dtm=v=>v?new Date(v).toLocaleString('pt-BR'):'—';
+const REPORT_DEFS={
+  clientes:{title:'Clientes',store:'clientes',dateField:null,
+    cols:[['Nome',x=>x.nome],['CPF',x=>x.cpf],['Telefone',x=>x.telefone],['E-mail',x=>x.email],['Endereço',x=>[x.endereco,x.bairro].filter(Boolean).join(', ')],['Cidade/UF',x=>`${x.cidade||''}${x.uf?' / '+x.uf:''}`]],
+    summary:r=>[['Clientes',r.length],['Com CPF',r.filter(x=>x.cpf).length]]},
+  produtos:{title:'Produtos',store:'produtos',dateField:null,
+    cols:[['Código',x=>x.cod],['Barras',x=>x.codigoBarras],['Descrição',x=>x.descricao],['Categoria',x=>x.categoria],['Unid.',x=>x.unidade],['Est. mín.',x=>x.estoqueMin],['Compra',x=>money(x.vCompra)],['Venda',x=>money(x.vVenda)],['Status',x=>x.ativo?'Ativo':'Inativo']],
+    summary:r=>[['Produtos',r.length],['Ativos',r.filter(x=>x.ativo).length],['Valor de venda',money(r.reduce((s,x)=>s+Number(x.vVenda||0),0))]]},
+  estoque:{title:'Estoque / FEFO (lotes)',store:'lotes',dateField:'vencimento',
+    cols:[['Produto',x=>x._desc||x.produtoCod],['Código',x=>x.produtoCod],['Lote',x=>x.lote||'—'],['Estoque',x=>x.estoque],['Qtd',x=>x.qtd],['Entrada',x=>dt(x.entradaEm||x.ts)],['Vencimento',x=>x.vencimento?dt(x.vencimento):'Não perecível'],['Situação',x=>!x.vencimento?'Não perecível':(new Date(x.vencimento)<new Date(today())?'Vencido':'Válido')]],
+    summary:r=>[['Lotes',r.length],['Saldo total',r.reduce((s,x)=>s+Number(x.qtd||0),0)],['Vencidos',r.filter(x=>x.vencimento&&x.vencimento<today()).length],['Não perecíveis',r.filter(x=>!x.vencimento).length]]},
+  transferencias:{title:'Transferências',store:'transferencias',dateField:'ts',
+    cols:[['Data',x=>dtm(x.ts)],['Produto',x=>x._desc||x.produtoCod],['Qtd',x=>x.qtd],['Origem',x=>x.origem],['Destino',x=>x.destino],['Lote',x=>x.lote||'—'],['Usuário',x=>x.user||'—']],
+    summary:r=>[['Transferências',r.length],['Qtd movimentada',r.reduce((s,x)=>s+Number(x.qtd||0),0)]]},
+  vendas:{title:'PDV / Vendas',store:'vendas',dateField:'ts',
+    cols:[['Data',x=>dtm(x.ts)],['Venda',x=>String(x.id).slice(0,8)],['Cliente',x=>x._cliente||'Consumidor final'],['Itens',x=>(x.itens||[]).reduce((s,i)=>s+Number(i.qtd||0),0)],['Produtos',x=>(x.itens||[]).map(i=>`${i.qtd}x ${i.descricao}`).join('; ')],['Subtotal',x=>money(x.subtotal)],['Desconto',x=>money(x.desconto?.value||0)],['Total',x=>money(x.total)],['Pagamentos',x=>(x.pagamentos||[]).map(p=>`${p.forma} ${money(p.valor)}`).join('; ')]],
+    summary:r=>[['Pedidos',r.length],['Faturamento',money(r.reduce((s,x)=>s+Number(x.total||0),0))],['Descontos',money(r.reduce((s,x)=>s+Number(x.desconto?.value||0),0))],['Ticket médio',money(r.length?r.reduce((s,x)=>s+Number(x.total||0),0)/r.length:0)]]},
+  caixas:{title:'Fechamento de Caixa',store:'caixas',dateField:'abertoEm',
+    cols:[['Abertura',x=>dtm(x.abertoEm)],['Aberto por',x=>x.abertoPor],['Fechamento',x=>dtm(x.fechadoEm)],['Fechado por',x=>x.fechadoPor||'—'],['Saldo inicial',x=>money(x.saldoInicial)],['Vendas',x=>money(x.totalVendas||0)],['Esperado',x=>money(x.saldoEsperado||0)],['Contado',x=>money(x.valorContado||0)],['Diferença',x=>money(x.diferenca||0)],['Status',x=>x.status]],
+    summary:r=>[['Caixas',r.length],['Fechados',r.filter(x=>x.status==='fechado').length],['Vendas',money(r.reduce((s,x)=>s+Number(x.totalVendas||0),0))],['Diferenças',money(r.reduce((s,x)=>s+Number(x.diferenca||0),0))]]},
+  financeiro:{title:'Financeiro',store:'financeiro',dateField:'vencimento',
+    cols:[['Tipo',x=>x.tipo],['Descrição',x=>x.descricao],['Vencimento',x=>dt(x.vencimento)],['Valor',x=>money(x.valor)],['Status',x=>x.status==='Pendente'&&x.vencimento<today()?'Vencido':x.status],['Baixa',x=>dtm(x.baixaEm)]],
+    summary:r=>[['Lançamentos',r.length],['A receber',money(r.filter(x=>x.tipo==='Receber').reduce((s,x)=>s+Number(x.valor||0),0))],['A pagar',money(r.filter(x=>x.tipo==='Pagar').reduce((s,x)=>s+Number(x.valor||0),0))],['Pendentes',r.filter(x=>x.status==='Pendente').length]]},
+  logs:{title:'Logs de auditoria',store:'logs',dateField:'ts',
+    cols:[['Data',x=>dtm(x.ts)],['Usuário',x=>x.user],['Ação',x=>x.action],['Entidade',x=>x.entity],['Antes',x=>x.before?JSON.stringify(x.before).slice(0,120):'—'],['Depois',x=>x.after?JSON.stringify(x.after).slice(0,120):'—']],
+    summary:r=>[['Eventos',r.length],['Usuários',new Set(r.map(x=>x.user)).size],['Ações',new Set(r.map(x=>x.action)).size]]}
+};
+async function generateReport(){
+  const key=$('rp-type')?.value||'clientes', def=REPORT_DEFS[key]; if(!def||!$('rpOut'))return;
+  let rows=await getAll(def.store);
+  if(key==='estoque'||key==='transferencias'){const prod=await getAll('produtos');rows=rows.map(x=>({...x,_desc:prod.find(p=>p.cod===x.produtoCod)?.descricao||''}))}
+  if(key==='vendas'){const cli=await getAll('clientes');rows=rows.map(x=>({...x,_cliente:cli.find(c=>c.id===x.clienteId)?.nome||''}))}
+  const q=filterValue('rp-q'), from=filterValue('rp-from'), to=filterValue('rp-to');
+  rows=rows.filter(x=>(!q||JSON.stringify(x).toLowerCase().includes(q))&&(!def.dateField||dateInRange(x[def.dateField],from,to)));
+  if(def.dateField)rows.sort((a,b)=>String(b[def.dateField]||'').localeCompare(String(a[def.dateField]||'')));
+  window._rpDef=def;window._rpRows=rows;
+  $('rpSummary').innerHTML=def.summary(rows).map(([l,v])=>`<div class="kpi"><div class="label">${esc(l)}</div><div class="v">${esc(String(v))}</div></div>`).join('');
+  function draw(){
+    tableState.relDet.draw=draw;const {rows:page}=pageItems('relDet');
+    $('rpOut').innerHTML=`<table><thead><tr>${def.cols.map(c=>`<th>${esc(c[0])}</th>`).join('')}</tr></thead><tbody>${page.map(x=>`<tr>${def.cols.map(c=>`<td>${esc(String(c[1](x)??''))||'—'}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${def.cols.length}" class="muted">Nenhum registro para os filtros informados.</td></tr>`}</tbody></table>${paginationHTML('relDet')}`;
+  }
+  tableState.relDet={size:tableState.relDet?.size||25,page:1,list:rows,draw};draw();
+}
+function exportReportCSV(){
+  const def=window._rpDef,rows=window._rpRows||[];if(!def)return;
+  const sep=';',clean=v=>`"${String(v??'').replace(/"/g,'""')}"`;
+  const csv=[def.cols.map(c=>clean(c[0])).join(sep),...rows.map(x=>def.cols.map(c=>clean(c[1](x))).join(sep))].join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));a.download=`relatorio-${def.title.toLowerCase().replace(/[^a-z0-9]+/g,'-')}-${today()}.csv`;a.click();URL.revokeObjectURL(a.href);
+  toast('Relatório exportado em CSV.');
+}
+function printReport(){
+  const def=window._rpDef,rows=window._rpRows||[];if(!def)return;
+  const w=window.open('','_blank');if(!w)return toast('Permita pop-ups para imprimir.','bad');
+  w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório — ${esc(def.title)}</title><style>body{font-family:Arial,sans-serif;padding:18px;color:#243447}h1{font-size:1.2rem;margin:0}small{color:#748292}table{width:100%;border-collapse:collapse;font-size:.72rem;margin-top:12px}th,td{border:1px solid #d9e1e8;padding:5px;text-align:left}th{background:#213547;color:#fff}</style></head><body><h1>ASV System — Relatório de ${esc(def.title)}</h1><small>Gerado em ${new Date().toLocaleString('pt-BR')} • ${rows.length} registro(s)</small><div>${def.summary(rows).map(([l,v])=>`<b>${esc(l)}:</b> ${esc(String(v))} &nbsp;`).join('')}</div><table><thead><tr>${def.cols.map(c=>`<th>${esc(c[0])}</th>`).join('')}</tr></thead><tbody>${rows.map(x=>`<tr>${def.cols.map(c=>`<td>${esc(String(c[1](x)??''))}</td>`).join('')}</tr>`).join('')}</tbody></table></body></html>`);
+  w.document.close();w.focus();w.print();
+}
+
+
+async function renderUsuarios(){
+  if(!allowed('usuarios'))return;let list=await getAll('usuarios');
+  $('content').innerHTML=`<div class="card"><div class="toolbar"><h3>Usuários / Perfis</h3><button class="btn primary" onclick="openForm('usuario')">+ Novo Registro</button></div>
+  <div class="table-filters"><div class="group"><label>Busca</label><input id="us-q" placeholder="Nome ou login..." oninput="applyUserFilter()"></div><div class="group"><label>Perfil</label><select id="us-perfil" onchange="applyUserFilter()"><option value="">Todos</option><option>admin</option><option>gerente</option><option>caixa</option><option>estoque</option></select></div><div class="group"><label>Status</label><select id="us-status" onchange="applyUserFilter()"><option value="">Todos</option><option value="1">Ativo</option><option value="0">Inativo</option></select></div><button class="btn light" onclick="['us-q','us-perfil','us-status'].forEach(id=>$(id).value='');applyUserFilter()">Limpar</button></div><div data-table-anchor="usuarios" id="userTable"></div></div>`;
+  window._userBase=list;
+  function draw(){tableState.usuarios.draw=draw;let {rows}=pageItems('usuarios');$('userTable').innerHTML=`<table><thead><tr><th>Nome</th><th>Login</th><th>Perfil</th><th>Status</th><th>Ações</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.nome)}</td><td>${esc(x.login)}</td><td>${esc(x.perfil)}</td><td>${x.ativo?'<span class="tag ok">Ativo</span>':'<span class="tag bad">Inativo</span>'}</td><td><button class="btn light" onclick="editRecord('usuarios','${x.id}','usuario')">Alterar</button><button class="btn secondary" onclick="managePerms('${x.id}')">Permissões</button><button class="btn bad" onclick="deleteRecord('usuarios','${x.id}')">Excluir</button></td></tr>`).join('')}</tbody></table>${paginationHTML('usuarios')}`}
+  tableState.usuarios={size:10,page:1,list,draw};draw();
+}
+function applyUserFilter(){let q=filterValue('us-q'),p=$('us-perfil')?.value||'',st=$('us-status')?.value||'';let a=(_userBase||[]).filter(x=>(!q||`${x.nome} ${x.login}`.toLowerCase().includes(q))&&(!p||x.perfil===p)&&(!st||String(Number(x.ativo))===st));setTableState('usuarios',a);tableState.usuarios.draw?.()}
+
+async function renderLogs(){
+  let list=(await getAll('logs')).sort((a,b)=>b.ts.localeCompare(a.ts)).slice(0,1000);
+  let users=[...new Set(list.map(x=>x.user).filter(Boolean))], acts=[...new Set(list.map(x=>x.action).filter(Boolean))], ents=[...new Set(list.map(x=>x.entity).filter(Boolean))];
+  $('content').innerHTML=`<div class="card"><div class="toolbar"><h3>Logs de alterações</h3><span class="muted">Até 1.000 eventos mais recentes</span></div>
+  <div class="table-filters"><div class="group"><label>Usuário</label><select id="lg-user" onchange="applyLogsFilter()"><option value="">Todos</option>${users.map(x=>`<option>${esc(x)}</option>`).join('')}</select></div><div class="group"><label>Ação</label><select id="lg-act" onchange="applyLogsFilter()"><option value="">Todas</option>${acts.map(x=>`<option>${esc(x)}</option>`).join('')}</select></div><div class="group"><label>Entidade</label><select id="lg-ent" onchange="applyLogsFilter()"><option value="">Todas</option>${ents.map(x=>`<option>${esc(x)}</option>`).join('')}</select></div><div class="group"><label>Data de</label><input id="lg-from" type="date" onchange="applyLogsFilter()"></div><div class="group"><label>até</label><input id="lg-to" type="date" onchange="applyLogsFilter()"></div><button class="btn light" onclick="['lg-user','lg-act','lg-ent','lg-from','lg-to'].forEach(id=>$(id).value='');applyLogsFilter()">Limpar</button></div><div data-table-anchor="logs" id="logTable"></div></div>`;
+  window._logsBase=list;
+  function draw(){tableState.logs.draw=draw;let {rows}=pageItems('logs');$('logTable').innerHTML=`<table><thead><tr><th>Data</th><th>Usuário</th><th>Ação</th><th>Entidade</th><th>Ações</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${new Date(x.ts).toLocaleString('pt-BR')}</td><td>${esc(x.user)}</td><td>${esc(x.action)}</td><td>${esc(x.entity)}</td><td><button class="btn bad" onclick="deleteRecord('logs','${x.id}')">Excluir</button></td></tr>`).join('')}</tbody></table>${paginationHTML('logs')}`}
+  tableState.logs={size:10,page:1,list,draw};draw();
+}
+function applyLogsFilter(){let u=$('lg-user')?.value||'',a=$('lg-act')?.value||'',e=$('lg-ent')?.value||'';let x=(_logsBase||[]).filter(z=>(!u||z.user===u)&&(!a||z.action===a)&&(!e||z.entity===e)&&dateInRange(z.ts,filterValue('lg-from'),filterValue('lg-to')));setTableState('logs',x);tableState.logs.draw?.()}
+
+async function renderConfig(){let cfg=await configGet('settings')||{empresa:'ASV System',moeda:'BRL',estoques:['Principal'],diasFEFO:30};$('content').innerHTML=`<div class="card"><div class="toolbar"><h3>Parâmetros</h3><button class="btn primary" onclick="saveConfig()">Salvar parâmetros</button></div><div class="grid"><div class="group"><label>Empresa</label><input id="cfgEmpresa" value="${esc(cfg.empresa)}"></div><div class="group"><label>Moeda</label><input id="cfgMoeda" value="${esc(cfg.moeda)}"></div><div class="group"><label>Alerta FEFO (dias)</label><input id="cfgFefo" type="number" value="${cfg.diasFEFO}"></div><div class="group full"><label>Estoques (um por linha)</label><textarea id="cfgEstoques" rows="4">${esc(cfg.estoques.join('\\n'))}</textarea></div></div></div><div class="card"><div class="toolbar"><h3>Importar / Exportar dados (.xlsx)</h3><div class="toolbar-right"><button class="btn ok" onclick="exportXLSX()">⇩ Exportar .xlsx</button><button class="btn primary" onclick="pickXLSX()">⇧ Importar .xlsx</button><button class="btn light" onclick="downloadXLSXTemplate()">Modelo</button></div></div><div class="notice">A exportação gera uma planilha com as abas <b>Produtos</b> e <b>Estoque</b> (lotes FEFO). Na importação, produtos são atualizados pelo código/SKU e cada linha da aba Estoque cria um novo lote.</div><input id="xlsxFile" type="file" accept=".xlsx,.xls" class="hidden" onchange="importXLSX(this)"></div><div class="card"><h3>Criptografia local</h3><div class="notice">Dados de negócio sensíveis ficam cifrados durante a sessão com AES-GCM; credenciais usam PBKDF2-SHA-256. O IndexedDB ainda armazena metadados técnicos necessários ao funcionamento.</div></div>`}
+async function saveConfig(){let cfg={empresa:$('cfgEmpresa').value,moeda:$('cfgMoeda').value,diasFEFO:Number($('cfgFefo').value)||30,estoques:$('cfgEstoques').value.split(/\\n+/).map(x=>x.trim()).filter(Boolean)};let old=await configGet('settings');await configSet('settings',cfg);await log('UPDATE','config',old,cfg);toast('Parâmetros salvos.')}
+
+async function openInventory(){
+  let products=await getAll('produtos'),lotes=await getAll('lotes'),map={};
+  lotes.forEach(l=>{map[l.produtoCod]=(map[l.produtoCod]||0)+Number(l.qtd)});
+  let base=products.map(p=>({...p,sistema:map[p.cod]||0}));
+  modalSpec={title:'Inventário físico',store:null};$('modalTitle').textContent='Inventário físico';
+  $('modalBody').innerHTML=`<div class="notice">Digite a contagem física e confirme. Diferenças serão registradas no inventário e no log.</div>
+  <div class="table-filters" style="margin-top:10px"><div class="group"><label>Busca</label><input id="inv-q" placeholder="Código ou produto..." oninput="applyInventoryFilter()"></div><div class="group"><label>Saldo sistema</label><select id="inv-st" onchange="applyInventoryFilter()"><option value="">Todos</option><option value="0">Zerado</option><option value="pos">Com saldo</option></select></div><button class="btn light" onclick="['inv-q','inv-st'].forEach(id=>$(id).value='');applyInventoryFilter()">Limpar</button></div>
+  <div data-table-anchor="inventarioModal" id="invTable" style="margin-top:10px"></div>`;
+  $('modalForm').onsubmit=async e=>{e.preventDefault();let rows=Object.values(tableState.inventarioModal.inputs||{}).filter(x=>x.value!=='').map(x=>({produtoCod:x.dataset.cod,sistema:Number(x.dataset.sistema)||0,contado:Number(x.value),dif:Number(x.value)-(Number(x.dataset.sistema)||0)}));await put('inventario',{id:uid(),ts:new Date().toISOString(),user:session.login,rows});await log('CREATE','inventario',null,rows);closeModal();toast('Inventário registrado.');};
+  $('modal').classList.add('active');
+  window._invBase=base;
+  function draw(){tableState.inventarioModal.draw=draw;let {rows}=pageItems('inventarioModal');$('invTable').innerHTML=`<table><thead><tr><th>Produto</th><th>Saldo sistema</th><th>Contagem</th></tr></thead><tbody>${rows.map(p=>`<tr><td>${esc(p.cod)} — ${esc(p.descricao)}</td><td>${p.sistema}</td><td><input class="inv-count" data-cod="${esc(p.cod)}" data-sistema="${p.sistema}" type="number" min="0"></td></tr>`).join('')}</tbody></table>${paginationHTML('inventarioModal')}`;
+    tableState.inventarioModal.inputs={};document.querySelectorAll('.inv-count').forEach(x=>tableState.inventarioModal.inputs[x.dataset.cod]=x);
+  }
+  tableState.inventarioModal={size:10,page:1,list:base,draw,inputs:{}};draw();
+}
+function applyInventoryFilter(){let q=filterValue('inv-q'),st=$('inv-st')?.value||'';let a=(_invBase||[]).filter(x=>(!q||`${x.cod} ${x.descricao}`.toLowerCase().includes(q))&&(!st||(st==='0'&&x.sistema===0)||(st==='pos'&&x.sistema>0)));setTableState('inventarioModal',a);tableState.inventarioModal.draw?.()}
+
+/* ===== Entrada de mercadoria por bipagem ===== */
+let entrySession=null;
+async function openEntryScanner(){
+  if(!session)return toast('Faça login para continuar.','bad');
+  if(!allowed('estoque'))return toast('Sem permissão para registrar entradas.','bad');
+  const produtos=await getAll('produtos'),cfg=await configGet('settings');
+  const estoques=(cfg&&cfg.estoques&&cfg.estoques.length)?cfg.estoques:['Principal'];
+  entrySession={produtos,lines:[],scans:0};
+  $('entryDate').value=today();$('entryStock').innerHTML=estoques.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+  $('entryExpiry').value='';$('entryLot').value='';$('entryCost').value='0';$('entryBarcode').value='';$('entryScanQty').value='1';
+  drawEntrySession();$('entryModal').classList.add('active');setTimeout(()=>$('entryBarcode').focus(),50);
+}
+function drawEntrySession(){
+  if(!entrySession)return;
+  const total=entrySession.lines.reduce((s,x)=>s+Number(x.qtd||0),0);
+  $('entryScanCount').textContent=entrySession.scans;$('entryQtyTotal').textContent=total;$('entryLineCount').textContent=entrySession.lines.length;
+  $('entryLines').innerHTML=`<table><thead><tr><th>Produto</th><th>Código</th><th>Qtd. entrada</th><th>Validade</th><th>Lote</th><th>Estoque</th><th>Custo</th><th>Ação</th></tr></thead><tbody>${entrySession.lines.map((x,i)=>`<tr><td>${esc(x.descricao)}</td><td>${esc(x.cod)}${x.codigoBarras?`<br><small>${esc(x.codigoBarras)}</small>`:''}</td><td><input type="number" min="1" step="1" value="${x.qtd}" onchange="changeEntryLine(${i},this.value)"></td><td>${x.vencimento?dt(x.vencimento):'Sem validade'}</td><td>${esc(x.lote||'—')}</td><td>${esc(x.estoque)}</td><td>${money(x.custo)}</td><td><button type="button" class="btn bad" onclick="removeEntryLine(${i})">×</button></td></tr>`).join('')||'<tr><td colspan="8" class="muted">Nenhum produto bipado ainda.</td></tr>'}</tbody></table>`;
+}
+function findEntryProduct(code){
+  const q=String(code||'').trim().toLowerCase();if(!q)return null;
+  return (entrySession?.produtos||[]).find(p=>String(p.codigoBarras||'').toLowerCase()===q)||(entrySession?.produtos||[]).find(p=>String(p.cod||'').toLowerCase()===q)||(entrySession?.produtos||[]).find(p=>String(p.descricao||'').toLowerCase()===q);
+}
+function scanEntryProduct(){
+  if(!entrySession)return;
+  const code=$('entryBarcode').value.trim(),qty=Math.floor(Number($('entryScanQty').value)||0);
+  if(!code)return toast('Bipe ou informe o código do produto.','bad');
+  if(qty<1)return toast('A quantidade deve ser maior que zero.','bad');
+  const p=findEntryProduct(code);if(!p)return toast(`Produto não encontrado para o código: ${code}`,'bad');
+  const venc=String($('entryExpiry').value||'').trim(),lote=String($('entryLot').value||'').trim(),estoque=$('entryStock').value,custo=Number($('entryCost').value)||0;
+  const key=`${p.cod}|${estoque}|${lote}|${venc}|${custo}`,ex=entrySession.lines.find(x=>x._key===key);
+  if(ex)ex.qtd+=qty;else entrySession.lines.push({...p,qtd:qty,vencimento:venc,lote,estoque,custo,_key:key});
+  entrySession.scans++;$('entryBarcode').value='';$('entryScanQty').value='1';drawEntrySession();$('entryBarcode').focus();
+}
+function changeEntryLine(i,val){const q=Math.floor(Number(val)||0);if(q<1)return toast('A quantidade deve ser maior que zero.','bad');if(entrySession?.lines[i])entrySession.lines[i].qtd=q;drawEntrySession()}
+function removeEntryLine(i){if(entrySession)entrySession.lines.splice(i,1);drawEntrySession()}
+async function finishEntrySession(){
+  if(!entrySession)return;
+  if(!entrySession.lines.length)return toast('Bipe pelo menos um produto antes de finalizar.','bad');
+  if(!confirm(`Confirmar entrada de ${entrySession.lines.reduce((s,x)=>s+Number(x.qtd||0),0)} item(ns) em ${entrySession.lines.length} linha(s)?`))return;
+  try{
+    for(const x of entrySession.lines){const rec={id:uid(),produtoCod:x.cod,qtd:Number(x.qtd),vencimento:x.vencimento||'',perecivel:x.vencimento?1:0,lote:x.lote||'',custo:Number(x.custo||0),estoque:x.estoque,entradaEm:today(),ts:new Date().toISOString(),entradaPor:session?.login||'sistema',origem:'bipagem'};await put('lotes',rec);await log('CREATE','lotes',null,rec)}
+    const total=entrySession.lines.reduce((s,x)=>s+Number(x.qtd||0),0);entrySession=null;$('entryModal').classList.remove('active');toast(`Entrada concluída: ${total} item(ns) registrado(s) por bipagem.`);await openPage(currentPage);
+  }catch(err){console.error(err);toast('Erro ao registrar entrada: '+(err.message||err),'bad')}
+}
+function cancelEntrySession(){if(!entrySession)return;if(entrySession.lines.length&&!confirm('Cancelar a entrada em andamento? Os itens ainda não foram gravados.'))return;entrySession=null;$('entryModal').classList.remove('active')}
+$('entryBarcode')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();scanEntryProduct()}});
+$('entryScanQty')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();scanEntryProduct()}});
+
+/* ===== Exportação JSON + Google Drive ===== */
+const IDB_EXPORT_STORES=['clientes','produtos','lotes','transferencias','vendas','financeiro','usuarios','caixas','pagamentos','parcelas','config','inventario','logs'];
+async function buildIndexedDBExport(){const out={version:1,app:'ASV System',exportedAt:new Date().toISOString(),stores:{}};for(const s of IDB_EXPORT_STORES)out.stores[s]=await getAll(s);return out}
+async function exportData(){
+  const out=await buildIndexedDBExport(),blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json;charset=utf-8'});
+  download(blob,`asv-indexeddb-${today()}.json`);await log('EXPORT','indexeddb-json',null,{stores:Object.keys(out.stores),exportedAt:out.exportedAt});toast('Todos os dados do IndexedDB foram exportados para JSON.');
+}
+// Quando a página é aberta direto do disco (file://) a origem é "null" e o Google Apps Script
+// nunca devolve o cabeçalho Access-Control-Allow-Origin: qualquer fetch normal falha por CORS.
+// Nesse cenário enviamos direto em modo no-cors (o Apps Script recebe e grava o arquivo).
+function isNullOrigin(){
+  try{return location.protocol==='file:'||String(window.origin||'')==='null'}catch(e){return true}
+}
+async function postExecNoCors(execUrl,body){
+  await fetch(execUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body});
+}
+async function saveJSONToDrive(){
+  if(!session)return toast('Faça login para continuar.','bad');
+  let execUrl=String(window.ASV_EXEC_URL||'').trim();
+  if(!isValidExecUrl(execUrl)){
+    if(!configExecUrl())return;
+    execUrl=String(window.ASV_EXEC_URL||'').trim();
+    if(!isValidExecUrl(execUrl))return toast('Configure uma URL /exec válida antes de salvar.','bad');
+  }
+  $('dbStatus').textContent='● Salvando JSON no Google Drive...';
+  try{
+    const out=await buildIndexedDBExport(),json=JSON.stringify(out,null,2),name=`asv-indexeddb-${today()}-${new Date().toTimeString().slice(0,8).replace(/:/g,'')}.json`;
+    const body=JSON.stringify({action:'saveIndexedDBJsonToDrive',json,fileName:name});
+    let semConfirmacao=false,r=null;
+    if(isNullOrigin()){
+      // Página local: não tenta o fetch com CORS (ele sempre falharia e poluiria o console).
+      semConfirmacao=true;
+      await postExecNoCors(execUrl,body);
+    }else{
+      try{
+        const response=await fetch(execUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},redirect:'follow',body});
+        const text=await response.text();
+        if(!response.ok)throw new Error(`HTTP ${response.status}${text?': '+text.slice(0,180):''}`);
+        try{r=JSON.parse(text)}catch(e){throw new Error('Resposta inválida da Web App: era esperado um JSON.')}
+        if(r?.ok===false)throw new Error(r?.error||'A Web App informou que não salvou o arquivo.');
+      }catch(err){
+        // Erros reais da Web App (HTTP/JSON) devem aparecer; só falhas de rede/CORS caem no reenvio.
+        if(/^HTTP \d|Resposta inválida|informou que não salvou/.test(String(err?.message||'')))throw err;
+        semConfirmacao=true;
+        await postExecNoCors(execUrl,body);
+      }
+    }
+    await log('EXPORT','google-drive-json',null,{fileName:name,exportedAt:out.exportedAt,noCors:semConfirmacao});
+    if(semConfirmacao){
+      toast(`Arquivo ${name} enviado ao Google Drive. Como a página está aberta localmente, o navegador não permite ler a resposta da Web App — confira a pasta no Drive para confirmar.`);
+    }else{
+      toast(`JSON salvo no Google Drive: ${r?.name||r?.result?.name||'arquivo criado'}.`);
+    }
+  }catch(err){
+    console.error('Falha ao salvar JSON no Drive:',err);
+    toast('Falha ao salvar no Drive: '+driveSaveError(err),'bad');
+  }finally{
+    $('dbStatus').textContent='● Banco local';
+  }
+}
+
+
+async function backupEncrypted(){let all={};for(const s of ['clientes','produtos','lotes','transferencias','vendas','financeiro','usuarios','caixas','pagamentos','parcelas','config','inventario'])all[s]=await getAll(s);let data=await enc(all);download(new Blob([JSON.stringify({version:1,alg:'AES-GCM',...data})],{type:'application/json'}),'asv-backup-encrypted.json')}
+function download(blob,name){let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+
+/* ===== Importação / Exportação XLSX (Produtos e Estoque/FEFO) ===== */
+const XLSX_PROD_FIELDS=['cod','codigoBarras','descricao','categoria','unidade','vCompra','vVenda','estoqueMin','ativo'];
+const XLSX_LOTE_FIELDS=['produtoCod','lote','estoque','qtd','custo','entradaEm','vencimento'];
+async function exportXLSX(){
+  if(!window.XLSX)return toast('Biblioteca de planilhas indisponível. Verifique a conexão.','bad');
+  if(!session)return toast('Faça login para continuar.','bad');
+  const produtos=await getAll('produtos'), lotes=await getAll('lotes');
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(produtos.map(p=>Object.fromEntries(XLSX_PROD_FIELDS.map(f=>[f,p[f]??'']))),{header:XLSX_PROD_FIELDS}),'Produtos');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(lotes.map(l=>Object.fromEntries(XLSX_LOTE_FIELDS.map(f=>[f,f==='entradaEm'?(l.entradaEm||String(l.ts||'').slice(0,10)):(l[f]??'')]))),{header:XLSX_LOTE_FIELDS}),'Estoque');
+  const buf=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+  download(new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`asv-dados-${today()}.xlsx`);
+  await log('EXPORT','xlsx',null,{produtos:produtos.length,lotes:lotes.length});
+  toast('Planilha exportada com Produtos e Estoque / FEFO.');
+}
+function pickXLSX(){$('xlsxFile')?.click()}
+async function importXLSX(input){
+  const file=input.files&&input.files[0]; input.value='';
+  if(!file)return;
+  if(!window.XLSX)return toast('Biblioteca de planilhas indisponível. Verifique a conexão.','bad');
+  if(!session)return toast('Faça login para continuar.','bad');
+  try{
+    const wb=XLSX.read(await file.arrayBuffer(),{type:'array'});
+    const sheet=n=>{const k=wb.SheetNames.find(x=>x.toLowerCase().startsWith(n));return k?XLSX.utils.sheet_to_json(wb.Sheets[k],{defval:''}):[]};
+    const rowsP=sheet('produto'), rowsL=sheet('estoque').concat(sheet('lote'));
+    if(!rowsP.length&&!rowsL.length)return toast('Nenhuma aba "Produtos" ou "Estoque" encontrada na planilha.','bad');
+    const produtos=await getAll('produtos'); let novos=0,atualizados=0;
+    for(const r of rowsP){
+      const cod=String(r.cod??'').trim(); if(!cod)continue;
+      const ex=produtos.find(p=>String(p.cod)===cod);
+      const rec={...(ex||{}),id:ex?.id||uid(),cod,
+        codigoBarras:String(r.codigoBarras??'').trim(),descricao:String(r.descricao??'').trim(),
+        categoria:String(r.categoria??'').trim(),unidade:String(r.unidade??'UN').trim(),
+        vCompra:Number(r.vCompra||0),vVenda:Number(r.vVenda||0),estoqueMin:Number(r.estoqueMin||0),
+        ativo:Number(r.ativo===''||r.ativo===undefined?1:r.ativo)?1:0};
+      await put('produtos',rec); ex?atualizados++:novos++; if(!ex)produtos.push(rec);
+    }
+    let lotesNovos=0;
+    for(const r of rowsL){
+      const cod=String(r.produtoCod??r.cod??'').trim(), qtd=Number(r.qtd||0);
+      if(!cod||!(qtd>0))continue;
+      if(!produtos.some(p=>String(p.cod)===cod)){toast(`Lote ignorado: produto ${cod} não cadastrado.`,'warn');continue}
+      const venc=xlsxDate(r.vencimento);
+      await put('lotes',{id:uid(),produtoCod:cod,qtd,lote:String(r.lote??'').trim(),
+        estoque:String(r.estoque??'Principal').trim()||'Principal',custo:Number(r.custo||0),
+        vencimento:venc,perecivel:venc?1:0,entradaEm:xlsxDate(r.entradaEm)||today(),ts:new Date().toISOString()});
+      lotesNovos++;
+    }
+    await log('IMPORT','xlsx',null,{produtosNovos:novos,produtosAtualizados:atualizados,lotes:lotesNovos});
+    toast(`Importação concluída: ${novos} produto(s) novo(s), ${atualizados} atualizado(s), ${lotesNovos} lote(s).`);
+    await openPage(currentPage);
+  }catch(err){console.error(err);toast('Erro ao importar planilha: '+(err.message||err),'bad')}
+}
+function xlsxDate(v){
+  if(v===''||v===null||v===undefined)return '';
+  if(v instanceof Date)return v.toISOString().slice(0,10);
+  if(typeof v==='number'){const d=new Date(Date.UTC(1899,11,30)+v*864e5);return d.toISOString().slice(0,10)}
+  const s=String(v).trim();
+  const br=s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/); if(br)return `${br[3]}-${br[2]}-${br[1]}`;
+  return s.slice(0,10);
+}
+function downloadXLSXTemplate(){
+  if(!window.XLSX)return toast('Biblioteca de planilhas indisponível.','bad');
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet([{cod:'SKU001',codigoBarras:'7890000000001',descricao:'Produto exemplo',categoria:'Geral',unidade:'UN',vCompra:10,vVenda:15,estoqueMin:5,ativo:1}],{header:XLSX_PROD_FIELDS}),'Produtos');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet([{produtoCod:'SKU001',lote:'L001',estoque:'Principal',qtd:20,custo:10,entradaEm:today(),vencimento:''}],{header:XLSX_LOTE_FIELDS}),'Estoque');
+  download(new Blob([XLSX.write(wb,{bookType:'xlsx',type:'array'})],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),'asv-modelo-importacao.xlsx');
+}
+window.exportXLSX=exportXLSX;window.importXLSX=importXLSX;window.pickXLSX=pickXLSX;window.downloadXLSXTemplate=downloadXLSXTemplate;
+
+/* ===== Janela modal / CRUD genérico ===== */
+function group(label,inner){return `<div class="group"><label>${esc(label)}</label>${inner}</div>`}
+function fieldHTML(f,record,produtos,estoques){
+  const name=f[0],type=f[1],label=f[2],req=f[3],ph=f[4],opts=f[5];
+  let v=record?.[name]; v=(v===undefined||v===null)?'':v;
+  const r=req?'required':'';
+  if(name==='produtoCod'&&produtos)
+    return group('Buscar produto (código de barras ou descrição)',`<input id="prodLookup" autocomplete="off" placeholder="Bipe o código de barras ou digite a descrição" oninput="lookupProduto(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();lookupProduto(this.value,true)}">`)
+      +group(label,`<select id="produtoCodSelect" name="${name}" ${r}><option value="">Selecione o produto</option>${produtos.map(p=>`<option value="${esc(p.cod)}" data-barras="${esc(p.codigoBarras||'')}" data-desc="${esc(p.descricao||'')}" ${String(v)===String(p.cod)?'selected':''}>${esc(p.cod)} — ${esc(p.descricao)}</option>`).join('')}</select>`);
+  if(name==='estoque'||name==='origem'||name==='destino'){
+    const list=[...new Set([...(estoques||[]),v].filter(Boolean))];
+    return group(label,`<select name="${name}" ${r}>${list.map(x=>`<option value="${esc(x)}" ${String(v)===String(x)?'selected':''}>${esc(x)}</option>`).join('')}</select>`);
+  }
+  if(name==='entradaEm')
+    return group(label,`<input name="${name}" type="date" value="${esc(v||today())}" readonly tabindex="-1" style="background:#eef3f7;color:#5b6b7c;cursor:not-allowed">`);
+  if(type==='select')
+    return group(label,`<select name="${name}" ${r}>${(opts||[]).map(o=>`<option value="${esc(o[0])}" ${String(v)===String(o[0])?'selected':''}>${esc(o[1])}</option>`).join('')}</select>`);
+  if(type==='password')
+    return group(label,`<input name="${name}" type="password" ${record?'':r} placeholder="${record?'Deixe em branco para manter a senha atual':'Mínimo 8 caracteres'}">`);
+  return group(label,`<input name="${name}" type="${type}" ${type==='number'?'step="any"':''} value="${esc(v)}" ${r} placeholder="${esc(ph||'')}">`);
+}
+/* Busca de produto por código de barras, código interno ou descrição */
+function lookupProduto(term,enter=false){
+  const sel=$('produtoCodSelect'); if(!sel)return;
+  const q=String(term||'').trim().toLowerCase();
+  const list=window._formProdutos||[];
+  if(!q){sel.value='';return}
+  const exato=list.find(p=>String(p.codigoBarras||'').toLowerCase()===q)||list.find(p=>String(p.cod||'').toLowerCase()===q);
+  if(exato){sel.value=exato.cod; if(enter)$('modalBody').querySelector('[name="qtd"]')?.focus(); return}
+  const parciais=list.filter(p=>`${p.cod} ${p.codigoBarras||''} ${p.descricao||''}`.toLowerCase().includes(q));
+  if(parciais.length===1){sel.value=parciais[0].cod; if(enter)$('modalBody').querySelector('[name="qtd"]')?.focus();}
+  else if(enter)toast(parciais.length?'Vários produtos encontrados. Selecione na lista.':'Nenhum produto encontrado para: '+term,'bad');
+}
+
+/* Estorno de lote: devolve/retira quantidade de um lote com registro em auditoria */
+async function estornarLote(id){
+  const lote=(await getAll('lotes')).find(x=>x.id===id);
+  if(!lote)return toast('Lote não encontrado.','bad');
+  const saldo=Number(lote.qtd||0);
+  const resp=prompt(`Estorno de lote\nProduto: ${lote.produtoCod}\nLote: ${lote.lote||'—'}\nSaldo atual: ${saldo}\n\nQuantidade a estornar:`,String(saldo));
+  if(resp===null)return;
+  const qtd=Number(String(resp).replace(',','.'));
+  if(!(qtd>0))return toast('Informe uma quantidade maior que zero.','bad');
+  if(qtd>saldo)return toast('Quantidade maior que o saldo do lote.','bad');
+  const motivo=(prompt('Motivo do estorno (obrigatório):','')||'').trim();
+  if(!motivo)return toast('Estorno cancelado: informe o motivo.','bad');
+  const before=JSON.parse(JSON.stringify(lote));
+  lote.qtd=saldo-qtd;
+  lote.estornos=[...(lote.estornos||[]),{qtd,motivo,ts:new Date().toISOString(),user:session?.login||'sistema'}];
+  await put('lotes',lote);
+  await log('ESTORNO','lotes',before,lote);
+  toast(`Estorno de ${qtd} registrado.`);
+  closeModal();
+  await openPage(currentPage);
+}
+window.lookupProduto=lookupProduto;window.estornarLote=estornarLote;
+
+async function openForm(kind,record=null){
+  const spec=FORMS[kind];
+  if(!spec)return toast('Formulário não encontrado: '+kind,'bad');
+  if(!session)return toast('Faça login para continuar.','bad');
+  modalSpec={...spec,kind}; modalEdit=record||null;
+  $('modalTitle').textContent=(record?'Alterar — ':'')+spec.title;
+  let produtos=null;
+  if(spec.fields.some(f=>f[0]==='produtoCod')){produtos=(await getAll('produtos')).sort((a,b)=>String(a.descricao).localeCompare(String(b.descricao)));window._formProdutos=produtos;}
+  let cfg=await configGet('settings');
+  const estoques=(cfg&&cfg.estoques&&cfg.estoques.length)?cfg.estoques:['Principal'];
+  $('modalBody').innerHTML=`<div class="grid">${spec.fields.map(f=>fieldHTML(f,record,produtos,estoques)).join('')}</div>`;
+  $('modalForm').onsubmit=submitModal;
+  $('modal').classList.add('active');
+  setTimeout(()=>$('modalBody').querySelector('input,select,textarea')?.focus(),40);
+}
+async function editRecord(store,id,kind){
+  const rec=(await getAll(store)).find(x=>x.id===id);
+  if(!rec)return toast('Registro não encontrado.','bad');
+  await openForm(kind,rec);
+}
+function closeModal(){
+  const m=$('modal'); if(!m)return;
+  m.classList.remove('active');
+  if($('modalBody'))$('modalBody').innerHTML='';
+  if($('modalForm')){$('modalForm').reset();$('modalForm').onsubmit=submitModal;}
+  modalSpec=null; modalEdit=null;
+}
+async function submitModal(e){
+  e.preventDefault();
+  if(!modalSpec||!modalSpec.store)return closeModal();
+  const fd=new FormData($('modalForm')), data={};
+  for(const f of modalSpec.fields){
+    let v=fd.get(f[0]);
+    v=(v===null)?'':v;
+    if(typeof v==='string')v=v.trim();
+    data[f[0]]=(f[1]==='number')?Number(v||0):v;
+  }
+  const store=modalSpec.store, kind=modalSpec.kind;
+  try{
+    if(kind==='usuario')return await saveUsuario(data);
+    if(kind==='transferencia')return await saveTransferencia(data);
+    const before=modalEdit?JSON.parse(JSON.stringify(modalEdit)):null;
+    const rec={...(modalEdit||{}),...data,id:modalEdit?.id||uid()};
+    if(kind==='produto')rec.ativo=Number(rec.ativo);
+    if(kind==='entrada'){
+      if(Number(rec.qtd)<=0)return toast('A quantidade deve ser maior que zero.','bad');
+      rec.vencimento=String(rec.vencimento||'').trim();
+      rec.perecivel=rec.vencimento?1:0; /* vencimento em branco = produto não perecível */
+      if(!rec.ts)rec.ts=new Date().toISOString();
+      rec.entradaEm=(modalEdit&&modalEdit.entradaEm)?modalEdit.entradaEm:today();
+    }
+    if(kind==='financeiro'&&Number(rec.valor)<=0)return toast('Informe um valor maior que zero.','bad');
+    if(kind==='cliente'){
+      const dup=(await getAll('clientes')).find(c=>c.cpf&&c.cpf===rec.cpf&&c.id!==rec.id);
+      if(dup)return toast('Já existe cliente com este CPF.','bad');
+    }
+    if(kind==='produto'){
+      const dup=(await getAll('produtos')).find(p=>p.cod===rec.cod&&p.id!==rec.id);
+      if(dup)return toast('Já existe produto com este código.','bad');
+    }
+    await put(store,rec);
+    await log(before?'UPDATE':'CREATE',store,before,rec);
+    closeModal(); toast('Registro salvo com sucesso.');
+    await openPage(currentPage);
+  }catch(err){console.error(err);toast('Erro ao salvar: '+(err.message||err),'bad')}
+}
+async function saveUsuario(d){
+  if(!allowed('usuarios'))return toast('Sem permissão para gerenciar usuários.','bad');
+  const login=String(d.login||'').toLowerCase();
+  const list=await getAll('usuarios');
+  if(list.some(u=>u.login===login&&u.id!==modalEdit?.id))return toast('Já existe um usuário com este login.','bad');
+  const before=modalEdit?JSON.parse(JSON.stringify(modalEdit)):null;
+  const rec={...(modalEdit||{}),id:modalEdit?.id||uid(),nome:d.nome,login,perfil:d.perfil,ativo:Number(d.ativo)};
+  if(!rec.perms||before?.perfil!==d.perfil)rec.perms={...(DEFAULT_PERMS[d.perfil]||DEFAULT_PERMS.caixa)};
+  if(d.senha){
+    if(String(d.senha).length<8)return toast('A senha precisa ter pelo menos 8 caracteres.','bad');
+    if(!masterSecret||!masterSalt)return toast('Chave mestra indisponível nesta sessão. Faça login novamente.','bad');
+    const salt=crypto.getRandomValues(new Uint8Array(16));
+    rec.hash=await verifyHash(d.senha,salt);
+    rec.salt=btoa(String.fromCharCode(...salt));
+    const userKey=await derive(d.senha,salt);
+    rec.enc=await enc({secret:'ASV-MASTER',master:masterSecret,msalt:masterSalt,createdAt:new Date().toISOString()},userKey);
+  }else if(!modalEdit){
+    return toast('Informe uma senha para o novo usuário.','bad');
+  }
+  await put('usuarios',rec);
+  await log(before?'UPDATE':'CREATE','usuarios',before?{login:before.login,perfil:before.perfil,ativo:before.ativo}:null,{login,perfil:rec.perfil,ativo:rec.ativo});
+  if(session?.id===rec.id){session={...session,...rec};$('user-name').textContent=rec.nome;$('user-role').textContent=rec.perfil;renderNav();}
+  closeModal(); toast('Usuário salvo.');
+  await openPage(currentPage);
+}
+async function saveTransferencia(d){
+  if(modalEdit){
+    const before=JSON.parse(JSON.stringify(modalEdit));
+    const rec={...modalEdit,...d,qtd:Number(d.qtd)};
+    await put('transferencias',rec); await log('UPDATE','transferencias',before,rec);
+    closeModal(); toast('Transferência atualizada (sem novo movimento de estoque).');
+    return openPage(currentPage);
+  }
+  const qtd=Number(d.qtd);
+  if(qtd<=0)return toast('A quantidade deve ser maior que zero.','bad');
+  if(d.origem===d.destino)return toast('Origem e destino precisam ser diferentes.','bad');
+  const lots=(await getAll('lotes'))
+    .filter(l=>l.produtoCod===d.produtoCod&&l.estoque===d.origem&&Number(l.qtd)>0&&(!d.lote||l.lote===d.lote))
+    .sort((a,b)=>String(a.vencimento).localeCompare(String(b.vencimento)));
+  const disp=lots.reduce((s,l)=>s+Number(l.qtd||0),0);
+  if(disp<qtd)return toast(`Saldo insuficiente no estoque ${d.origem}. Disponível: ${disp}.`,'bad');
+  let rem=qtd;
+  for(const l of lots){
+    if(rem<=0)break;
+    const take=Math.min(rem,Number(l.qtd)); l.qtd=Number(l.qtd)-take; rem-=take;
+    await put('lotes',l);
+    await put('lotes',{id:uid(),produtoCod:l.produtoCod,qtd:take,vencimento:l.vencimento,lote:l.lote,custo:l.custo,estoque:d.destino,ts:new Date().toISOString()});
+  }
+  const rec={id:uid(),ts:new Date().toISOString(),user:session?.login||'sistema',...d,qtd};
+  await put('transferencias',rec); await log('CREATE','transferencias',null,rec);
+  closeModal(); toast('Transferência realizada com FEFO.');
+  await openPage(currentPage);
+}
+async function managePerms(id){
+  if(!allowed('usuarios'))return toast('Sem permissão para gerenciar permissões.','bad');
+  const u=(await getAll('usuarios')).find(x=>x.id===id);
+  if(!u)return toast('Usuário não encontrado.','bad');
+  modalSpec={title:'Permissões',store:null,fields:[]}; modalEdit=u;
+  const perms=u.perms||DEFAULT_PERMS[u.perfil]||{};
+  $('modalTitle').textContent=`Permissões — ${u.nome}`;
+  $('modalBody').innerHTML=`<div class="notice">Marque as guias que <b>${esc(u.login)}</b> pode acessar. Administradores sempre têm acesso total.</div>
+  <div class="checkgrid" style="margin-top:10px">${PERMS.map(p=>`<label><input type="checkbox" class="permchk" value="${p}" ${perms[p]?'checked':''}> ${p}</label>`).join('')}</div>`;
+  $('modalForm').onsubmit=async ev=>{
+    ev.preventDefault();
+    const before={...perms}, np={}; PERMS.forEach(p=>np[p]=0);
+    document.querySelectorAll('.permchk:checked').forEach(c=>np[c.value]=1);
+    u.perms=np; await put('usuarios',u); await log('UPDATE','permissoes',before,np);
+    if(session?.id===u.id){session.perms=np;renderNav();}
+    closeModal(); toast('Permissões atualizadas.');
+    await openPage(currentPage);
+  };
+  $('modal').classList.add('active');
+}
+
+window.addEventListener('keydown',e=>{if(e.key==='Escape'){if(entrySession){e.preventDefault();return}closeModal();closePayment()}});
+init().catch(e=>{$('login-msg').textContent='Erro ao iniciar o banco local.';console.error(e)});
+</script>
+</body>
+</html>
