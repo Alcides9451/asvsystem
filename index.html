@@ -52,7 +52,7 @@ table{width:100%;border-collapse:collapse;font-size:.86rem}th,td{padding:8px;bor
   </aside>
   <main class="main">
     <header class="topbar"><div><h1 id="pageTitle">Dashboard</h1><div id="pageSub" style="color:var(--muted)">Visão geral</div></div>
-      <div class="top-actions"><button class="iconbtn" onclick="exportData()">⇩ JSON</button><button class="iconbtn" onclick="saveJSONToDrive()">☁ Salvar JSON no Drive</button><button class="iconbtn" onclick="configExecUrl()" title="Configurar URL /exec da Web App do Google Apps Script">⚙ URL do Drive</button><button class="iconbtn" onclick="backupEncrypted()">Backup criptografado</button></div>
+      <div class="top-actions"><button class="iconbtn" onclick="exportData()">⇩ JSON</button><button class="iconbtn" onclick="$('jsonFile').click()" title="Importar arquivo JSON com todos os dados do banco">⇧ JSON</button><input id="jsonFile" type="file" accept=".json,application/json" class="hidden" onchange="importData(this)"><button class="iconbtn" onclick="saveJSONToDrive()">☁ Salvar JSON no Drive</button><button class="iconbtn" onclick="configExecUrl()" title="Configurar URL /exec da Web App do Google Apps Script">⚙ URL do Drive</button><button class="iconbtn" onclick="backupEncrypted()">Backup criptografado</button></div>
     </header>
     <div id="content"></div>
   </main>
@@ -468,8 +468,8 @@ const REPORT_DEFS={
     cols:[['Código',x=>x.cod],['Barras',x=>x.codigoBarras],['Descrição',x=>x.descricao],['Categoria',x=>x.categoria],['Unid.',x=>x.unidade],['Est. mín.',x=>x.estoqueMin],['Compra',x=>money(x.vCompra)],['Venda',x=>money(x.vVenda)],['Status',x=>x.ativo?'Ativo':'Inativo']],
     summary:r=>[['Produtos',r.length],['Ativos',r.filter(x=>x.ativo).length],['Valor de venda',money(r.reduce((s,x)=>s+Number(x.vVenda||0),0))]]},
   estoque:{title:'Estoque / FEFO (lotes)',store:'lotes',dateField:'vencimento',
-    cols:[['Produto',x=>x._desc||x.produtoCod],['Código',x=>x.produtoCod],['Lote',x=>x.lote||'—'],['Estoque',x=>x.estoque],['Qtd',x=>x.qtd],['Entrada',x=>dt(x.entradaEm||x.ts)],['Vencimento',x=>x.vencimento?dt(x.vencimento):'Não perecível'],['Situação',x=>!x.vencimento?'Não perecível':(new Date(x.vencimento)<new Date(today())?'Vencido':'Válido')]],
-    summary:r=>[['Lotes',r.length],['Saldo total',r.reduce((s,x)=>s+Number(x.qtd||0),0)],['Vencidos',r.filter(x=>x.vencimento&&x.vencimento<today()).length],['Não perecíveis',r.filter(x=>!x.vencimento).length]]},
+    cols:[['Produto',x=>x._desc||x.produtoCod],['Código',x=>x.produtoCod],['Lote',x=>x.lote||'—'],['Estoque',x=>x.estoque],['Qtd',x=>x.qtd],['Entrada',x=>dt(x.entradaEm||x.ts)],['Vencimento',x=>x.vencimento?dt(x.vencimento):'Não perecível'],['Situação',x=>!x.vencimento?'Não perecível':(new Date(x.vencimento)<new Date(today())?'Vencido':'Válido')],['Valor venda un.',x=>money(x._vVenda||0)],['Receita mercadoria',x=>money(Number(x.qtd||0)*Number(x._vVenda||0))]],
+    summary:r=>[['Lotes',r.length],['Saldo total',r.reduce((s,x)=>s+Number(x.qtd||0),0)],['Receita total de mercadoria',money(r.reduce((s,x)=>s+Number(x.qtd||0)*Number(x._vVenda||0),0))],['Vencidos',r.filter(x=>x.vencimento&&x.vencimento<today()).length],['Não perecíveis',r.filter(x=>!x.vencimento).length]]},
   transferencias:{title:'Transferências',store:'transferencias',dateField:'ts',
     cols:[['Data',x=>dtm(x.ts)],['Produto',x=>x._desc||x.produtoCod],['Qtd',x=>x.qtd],['Origem',x=>x.origem],['Destino',x=>x.destino],['Lote',x=>x.lote||'—'],['Usuário',x=>x.user||'—']],
     summary:r=>[['Transferências',r.length],['Qtd movimentada',r.reduce((s,x)=>s+Number(x.qtd||0),0)]]},
@@ -489,7 +489,7 @@ const REPORT_DEFS={
 async function generateReport(){
   const key=$('rp-type')?.value||'clientes', def=REPORT_DEFS[key]; if(!def||!$('rpOut'))return;
   let rows=await getAll(def.store);
-  if(key==='estoque'||key==='transferencias'){const prod=await getAll('produtos');rows=rows.map(x=>({...x,_desc:prod.find(p=>p.cod===x.produtoCod)?.descricao||''}))}
+  if(key==='estoque'||key==='transferencias'){const prod=await getAll('produtos');rows=rows.map(x=>{const p=prod.find(p=>p.cod===x.produtoCod);return {...x,_desc:p?.descricao||'',_vVenda:Number(p?.vVenda||0),_vCompra:Number(p?.vCompra||0)}})}
   if(key==='vendas'){const cli=await getAll('clientes');rows=rows.map(x=>({...x,_cliente:cli.find(c=>c.id===x.clienteId)?.nome||''}))}
   const q=filterValue('rp-q'), from=filterValue('rp-from'), to=filterValue('rp-to');
   rows=rows.filter(x=>(!q||JSON.stringify(x).toLowerCase().includes(q))&&(!def.dateField||dateInRange(x[def.dateField],from,to)));
@@ -613,6 +613,33 @@ async function buildIndexedDBExport(){const out={version:1,app:'ASV System',expo
 async function exportData(){
   const out=await buildIndexedDBExport(),blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json;charset=utf-8'});
   download(blob,`asv-indexeddb-${today()}.json`);await log('EXPORT','indexeddb-json',null,{stores:Object.keys(out.stores),exportedAt:out.exportedAt});toast('Todos os dados do IndexedDB foram exportados para JSON.');
+}
+
+async function importData(input){
+  const file=input?.files?.[0];
+  input.value='';
+  if(!file)return;
+  let data;
+  try{data=JSON.parse(await file.text())}
+  catch(e){return toast('Arquivo inválido: não é um JSON legível.','bad')}
+  const stores=data?.stores;
+  if(!stores||typeof stores!=='object')return toast('Arquivo JSON não reconhecido. Use um arquivo gerado pelo botão "⇩ JSON".','bad');
+  const known=IDB_EXPORT_STORES.filter(s=>Array.isArray(stores[s]));
+  if(!known.length)return toast('O arquivo não contém nenhuma tabela conhecida do banco.','bad');
+  const totalRegistros=known.reduce((sum,s)=>sum+stores[s].length,0);
+  if(!confirm(`Importar "${file.name}"?\n\nIsso SUBSTITUI todos os dados atuais das tabelas: ${known.join(', ')} (${totalRegistros} registro(s)).\n\nDeseja continuar?`))return;
+  try{
+    for(const s of known){
+      await new Promise((res,rej)=>{const r=txStore(s,'readwrite').clear();r.onsuccess=()=>res();r.onerror=()=>rej(r.error)});
+      for(const row of stores[s]){if(row&&row.id!=null)await put(s,row)}
+    }
+    await log('IMPORT','indexeddb-json',null,{fileName:file.name,stores:known,registros:totalRegistros});
+    toast(`Importação concluída: ${totalRegistros} registro(s) restaurado(s) em ${known.length} tabela(s).`);
+    await openPage(currentPage);
+  }catch(err){
+    console.error('Falha ao importar JSON:',err);
+    toast('Erro ao importar JSON: '+(err.message||err),'bad');
+  }
 }
 // Quando a página é aberta direto do disco (file://) a origem é "null" e o Google Apps Script
 // nunca devolve o cabeçalho Access-Control-Allow-Origin: qualquer fetch normal falha por CORS.
