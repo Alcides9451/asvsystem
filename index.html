@@ -444,6 +444,24 @@ function updateFinTotalReceber(){let el=$('finTotalReceber');if(!el)return;let l
 function applyFinanceFilter(){let q=filterValue('fi-q'),t=$('fi-tipo')?.value||'',st=$('fi-status')?.value||'';let a=(_finBase||[]).filter(x=>(!q||String(x.descricao).toLowerCase().includes(q))&&(!t||x.tipo===t)&&(!st||x.status===st)&&dateInRange(x.vencimento,filterValue('fi-from'),filterValue('fi-to')));setTableState('financeiro',a);tableState.financeiro.draw?.()}
 async function baixarFinanceiro(){let sel=[...document.querySelectorAll('.fincheck:checked')];if(!sel.length)return toast('Selecione ao menos um registro pendente.','bad');let all=await getAll('financeiro');let n=0;for(const x of sel){let o=all.find(z=>z.id===x.dataset.id);if(o&&o.status==='Pendente'){let b={...o};o.status='Pago';o.baixaEm=new Date().toISOString();await put('financeiro',o);await log('UPDATE','financeiro',b,o);n++}}toast(n?`Baixas concluídas (${n}).`:'Nenhum registro pendente selecionado.',n?'ok':'bad');await openPage('financeiro')}
 
+/* Agrupa lotes idênticos (mesmo produto, lote, vencimento e estoque) evitando SKUs duplicados nas listagens */
+function groupLotes(list){
+  const map=new Map();
+  for(const x of (list||[])){
+    const k=[x.produtoCod,x.lote||'',x.vencimento||'',x.estoque||''].join('|');
+    const cur=map.get(k);
+    if(cur){cur.qtd=Number(cur.qtd||0)+Number(x.qtd||0);cur._ids.push(x.id);cur._lotes++;if(String(x.entradaEm||x.ts||'')<String(cur.entradaEm||cur.ts||''))cur.entradaEm=x.entradaEm||x.ts;}
+    else map.set(k,{...x,qtd:Number(x.qtd||0),_ids:[x.id],_lotes:1});
+  }
+  return [...map.values()];
+}
+async function excluirGrupoLotes(ids){
+  const arr=String(ids).split(',').filter(Boolean);
+  if(!confirm(`Confirma a exclusão de ${arr.length} registro(s) deste item?`))return;
+  const list=await getAll('lotes');
+  for(const id of arr){const old=list.find(x=>x.id===id);if(old){await del('lotes',id);await log('DELETE','lotes',old,null)}}
+  toast('Registros excluídos.');await openPage(currentPage);
+}
 async function renderRelatorios(){
   let [v,cx,l,logs]=await Promise.all([getAll('vendas'),getAll('caixas'),getAll('lotes'),getAll('logs')]);let total=stats(v,'total');
   $('content').innerHTML=`<div class="kpis"><div class="kpi"><div class="label">Vendas</div><div class="v">${money(total)}</div></div><div class="kpi"><div class="label">Pedidos</div><div class="v">${v.length}</div></div><div class="kpi"><div class="label">Caixas fechados</div><div class="v">${cx.filter(x=>x.status==='fechado').length}</div></div><div class="kpi"><div class="label">Eventos auditados</div><div class="v">${logs.length}</div></div></div><div class="card"><div class="toolbar"><h3>Relatório FEFO — próximos vencimentos</h3><button class="btn primary" onclick="print()">Imprimir</button></div>
@@ -451,8 +469,10 @@ async function renderRelatorios(){
   <div class="card"><div class="toolbar"><div><h3 style="margin:0">Relatórios detalhados por guia</h3><small class="muted">Clientes, Produtos, Estoque/FEFO, Transferências, PDV/Vendas, Fechamento de Caixa, Financeiro e Logs</small></div><div class="toolbar-right"><button class="btn ok" onclick="exportReportCSV()">⇩ CSV</button><button class="btn primary" onclick="printReport()">Imprimir</button></div></div>
   <div class="table-filters"><div class="group"><label>Guia / relatório</label><select id="rp-type" onchange="generateReport()">${Object.entries(REPORT_DEFS).map(([k,d])=>`<option value="${k}">${d.title}</option>`).join('')}</select></div><div class="group"><label>Busca detalhada</label><input id="rp-q" placeholder="Qualquer campo..." oninput="generateReport()"></div><div class="group"><label>Período de</label><input id="rp-from" type="date" onchange="generateReport()"></div><div class="group"><label>até</label><input id="rp-to" type="date" onchange="generateReport()"></div><button class="btn light" onclick="['rp-q','rp-from','rp-to'].forEach(id=>$(id).value='');generateReport()">Limpar</button></div>
   <div id="rpSummary" class="kpis" style="margin-bottom:12px"></div><div data-table-anchor="relDet" id="rpOut"></div></div>`;
-  window._relBase=l.filter(x=>x.qtd>0);
-  function draw(){tableState.relatorios.draw=draw;let {rows}=pageItems('relatorios');$('reportTable').innerHTML=`<table><thead><tr><th>Produto</th><th>Lote</th><th>Qtd</th><th>Vencimento</th><th>Ações</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.produtoCod)}</td><td>${esc(x.lote||'—')}</td><td>${x.qtd}</td><td>${x.vencimento?new Date(x.vencimento).toLocaleDateString('pt-BR'):'<span class="tag">Não perecível</span>'}</td><td><div class="table-actions"><button class="btn light" onclick="editRecord('lotes','${x.id}','entrada')">Alterar</button><button class="btn warn" onclick="estornarLote('${x.id}')">Estornar</button><button class="btn bad" onclick="deleteRecord('lotes','${x.id}')">Excluir</button></div></td></tr>`).join('')}</tbody></table>${paginationHTML('relatorios')}`}
+  const _prods=await getAll('produtos');
+  const _enrich=x=>{const p=_prods.find(p=>p.cod===x.produtoCod);return{...x,_desc:p?.descricao||'',_barras:p?.codigoBarras||'',_vVenda:Number(p?.vVenda||0)}};
+  window._relBase=groupLotes(l.filter(x=>x.qtd>0)).map(_enrich);
+  function draw(){tableState.relatorios.draw=draw;let {rows}=pageItems('relatorios');$('reportTable').innerHTML=`<table><thead><tr><th>Produto</th><th>SKU / Código</th><th>Código de barras</th><th>Lote</th><th>Qtd</th><th>Vencimento</th><th>Ações</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x._desc||x.produtoCod)}</td><td>${esc(x.produtoCod)}</td><td>${esc(x._barras||'—')}</td><td>${esc(x.lote||'—')}</td><td>${x.qtd}</td><td>${x.vencimento?new Date(x.vencimento).toLocaleDateString('pt-BR'):'<span class="tag">Não perecível</span>'}</td><td><div class="table-actions"><button class="btn light" onclick="editRecord('lotes','${x._ids[0]}','entrada')">Alterar</button><button class="btn warn" onclick="estornarLote('${x._ids[0]}')">Estornar</button><button class="btn bad" onclick="excluirGrupoLotes('${x._ids.join(',')}')">Excluir</button></div></td></tr>`).join('')}</tbody></table>${paginationHTML('relatorios')}`}
   tableState.relatorios={size:10,page:1,list:window._relBase,draw};draw();
   await generateReport();
 }
@@ -468,8 +488,8 @@ const REPORT_DEFS={
     cols:[['Código',x=>x.cod],['Barras',x=>x.codigoBarras],['Descrição',x=>x.descricao],['Categoria',x=>x.categoria],['Unid.',x=>x.unidade],['Est. mín.',x=>x.estoqueMin],['Compra',x=>money(x.vCompra)],['Venda',x=>money(x.vVenda)],['Status',x=>x.ativo?'Ativo':'Inativo']],
     summary:r=>[['Produtos',r.length],['Ativos',r.filter(x=>x.ativo).length],['Valor de venda',money(r.reduce((s,x)=>s+Number(x.vVenda||0),0))]]},
   estoque:{title:'Estoque / FEFO (lotes)',store:'lotes',dateField:'vencimento',
-    cols:[['Produto',x=>x._desc||x.produtoCod],['Código',x=>x.produtoCod],['Lote',x=>x.lote||'—'],['Estoque',x=>x.estoque],['Qtd',x=>x.qtd],['Entrada',x=>dt(x.entradaEm||x.ts)],['Vencimento',x=>x.vencimento?dt(x.vencimento):'Não perecível'],['Situação',x=>!x.vencimento?'Não perecível':(new Date(x.vencimento)<new Date(today())?'Vencido':'Válido')],['Valor venda un.',x=>money(x._vVenda||0)],['Receita mercadoria',x=>money(Number(x.qtd||0)*Number(x._vVenda||0))]],
-    summary:r=>[['Lotes',r.length],['Saldo total',r.reduce((s,x)=>s+Number(x.qtd||0),0)],['Receita total de mercadoria',money(r.reduce((s,x)=>s+Number(x.qtd||0)*Number(x._vVenda||0),0))],['Vencidos',r.filter(x=>x.vencimento&&x.vencimento<today()).length],['Não perecíveis',r.filter(x=>!x.vencimento).length]]},
+    cols:[['Produto',x=>x._desc||x.produtoCod],['SKU / Código',x=>x.produtoCod],['Código de barras',x=>x._barras||'—'],['Lote',x=>x.lote||'—'],['Estoque',x=>x.estoque],['Qtd',x=>x.qtd],['Entrada',x=>dt(x.entradaEm||x.ts)],['Vencimento',x=>x.vencimento?dt(x.vencimento):'Não perecível'],['Situação',x=>!x.vencimento?'Não perecível':(new Date(x.vencimento)<new Date(today())?'Vencido':'Válido')],['Valor venda un.',x=>money(x._vVenda||0)],['Receita mercadoria',x=>money(Number(x.qtd||0)*Number(x._vVenda||0))]],
+    summary:r=>[['Itens',r.length],['Saldo total',r.reduce((s,x)=>s+Number(x.qtd||0),0)],['Receita total de mercadoria',money(r.reduce((s,x)=>s+Number(x.qtd||0)*Number(x._vVenda||0),0))],['Vencidos',r.filter(x=>x.vencimento&&x.vencimento<today()).length],['Não perecíveis',r.filter(x=>!x.vencimento).length]]},
   transferencias:{title:'Transferências',store:'transferencias',dateField:'ts',
     cols:[['Data',x=>dtm(x.ts)],['Produto',x=>x._desc||x.produtoCod],['Qtd',x=>x.qtd],['Origem',x=>x.origem],['Destino',x=>x.destino],['Lote',x=>x.lote||'—'],['Usuário',x=>x.user||'—']],
     summary:r=>[['Transferências',r.length],['Qtd movimentada',r.reduce((s,x)=>s+Number(x.qtd||0),0)]]},
@@ -489,7 +509,8 @@ const REPORT_DEFS={
 async function generateReport(){
   const key=$('rp-type')?.value||'clientes', def=REPORT_DEFS[key]; if(!def||!$('rpOut'))return;
   let rows=await getAll(def.store);
-  if(key==='estoque'||key==='transferencias'){const prod=await getAll('produtos');rows=rows.map(x=>{const p=prod.find(p=>p.cod===x.produtoCod);return {...x,_desc:p?.descricao||'',_vVenda:Number(p?.vVenda||0),_vCompra:Number(p?.vCompra||0)}})}
+  if(key==='estoque')rows=groupLotes(rows);
+  if(key==='estoque'||key==='transferencias'){const prod=await getAll('produtos');rows=rows.map(x=>{const p=prod.find(p=>p.cod===x.produtoCod);return {...x,_desc:p?.descricao||'',_barras:p?.codigoBarras||'',_vVenda:Number(p?.vVenda||0),_vCompra:Number(p?.vCompra||0)}})}
   if(key==='vendas'){const cli=await getAll('clientes');rows=rows.map(x=>({...x,_cliente:cli.find(c=>c.id===x.clienteId)?.nome||''}))}
   const q=filterValue('rp-q'), from=filterValue('rp-from'), to=filterValue('rp-to');
   rows=rows.filter(x=>(!q||JSON.stringify(x).toLowerCase().includes(q))&&(!def.dateField||dateInRange(x[def.dateField],from,to)));
