@@ -113,6 +113,43 @@ table{width:100%;border-collapse:collapse;font-size:.86rem}th,td{padding:8px;bor
   </div>
 </div>
 
+<div id="invModal" class="modal entry-lock">
+  <div class="modal-box">
+    <div class="modal-head"><h3>Inventário Físico — Contagem por Bipagem</h3></div>
+    <div class="modal-body">
+      <div class="scan-help"><b>Contagem profissional:</b> bipe o código de barras/SKU de cada item. Cada bipagem soma na contagem do produto. A janela não fecha por clique fora — salve ou cancele explicitamente.</div>
+      <div class="scan-status">
+        <div class="scan-badge">Bipagens: <b id="invScanCount">0</b></div>
+        <div class="scan-badge">Produtos contados: <b id="invProdCount">0</b></div>
+        <div class="scan-badge">Itens contados: <b id="invItemCount">0</b></div>
+        <div class="scan-badge">Divergências: <b id="invDivCount">0</b></div>
+        <div class="scan-badge">Acuracidade: <b id="invAcc">100%</b></div>
+      </div>
+      <div class="scan-entry">
+        <div class="group"><label>Código de barras / SKU</label><input id="invBarcode" autocomplete="off" placeholder="Bipe o código e pressione Enter"></div>
+        <div class="group"><label>Quantidade por bipagem</label><input id="invScanQty" type="number" min="1" step="1" value="1"></div>
+        <button type="button" class="btn primary" onclick="scanInventory()">Bipar / Contar</button>
+      </div>
+      <div class="grid" style="margin-top:10px">
+        <div class="group"><label>Estoque inventariado</label><select id="invStock" onchange="invChangeStock()"></select></div>
+        <div class="group"><label>Data</label><input id="invDate" type="date" readonly tabindex="-1"></div>
+        <div class="group"><label>Responsável</label><input id="invUser" readonly tabindex="-1"></div>
+        <div class="group"><label>Busca</label><input id="invSearch" placeholder="Código ou produto..." oninput="invFilterChange()"></div>
+        <div class="group"><label>Exibir</label><select id="invFilter" onchange="invFilterChange()"><option value="todos">Todos os produtos</option><option value="contados">Somente contados</option><option value="pendentes">Somente não contados</option><option value="diverg">Somente divergentes</option></select></div>
+      </div>
+      <div class="scan-list" id="invLines"></div>
+    </div>
+    <div class="modal-foot">
+      <button type="button" class="btn secondary" onclick="cancelInventory()">Cancelar inventário</button>
+      <div style="display:flex;gap:8px">
+        <button type="button" class="btn light" onclick="printInventory()">Imprimir contagem</button>
+        <button type="button" class="btn primary" onclick="saveInventory(false)">Salvar contagem</button>
+        <button type="button" class="btn ok" onclick="saveInventory(true)">Finalizar e ajustar estoque</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 'use strict'; <!--Alterado Alcides-->
 window.ASV_EXEC_URL=localStorage.getItem('asv_exec_url')||'';
@@ -562,15 +599,16 @@ async function excluirGrupoLotes(ids){
 }
 async function renderRelatorios(){
   let [v,cx,l,logs]=await Promise.all([getAll('vendas'),getAll('caixas'),getAll('lotes'),getAll('logs')]);let total=stats(v,'total');
-  $('content').innerHTML=`<div class="kpis"><div class="kpi"><div class="label">Vendas</div><div class="v">${money(total)}</div></div><div class="kpi"><div class="label">Pedidos</div><div class="v">${v.length}</div></div><div class="kpi"><div class="label">Caixas fechados</div><div class="v">${cx.filter(x=>x.status==='fechado').length}</div></div><div class="kpi"><div class="label">Eventos auditados</div><div class="v">${logs.length}</div></div></div><div class="card"><div class="toolbar"><h3>Relatório FEFO — próximos vencimentos</h3><button class="btn primary" onclick="print()">Imprimir</button></div>
+  $('content').innerHTML=`<div class="kpis"><div class="kpi"><div class="label">Vendas</div><div class="v">${money(total)}</div></div><div class="kpi"><div class="label">Pedidos</div><div class="v">${v.length}</div></div><div class="kpi"><div class="label">Caixas fechados</div><div class="v">${cx.filter(x=>x.status==='fechado').length}</div></div><div class="kpi"><div class="label">Saídas (qtd)</div><div class="v">${v.reduce((s,x)=>s+(x.itens||[]).reduce((a,i)=>a+Number(i.qtd||0),0),0)}</div></div><div class="kpi"><div class="label">Eventos auditados</div><div class="v">${logs.length}</div></div></div><div class="card"><div class="toolbar"><h3>Relatório FEFO — próximos vencimentos</h3><button class="btn primary" onclick="print()">Imprimir</button></div>
   <div class="table-filters"><div class="group"><label>Busca</label><input id="re-q" placeholder="Produto ou lote..." oninput="applyRelFilter()"></div><div class="group"><label>Vencimento de</label><input id="re-from" type="date" onchange="applyRelFilter()"></div><div class="group"><label>até</label><input id="re-to" type="date" onchange="applyRelFilter()"></div><button class="btn light" onclick="['re-q','re-from','re-to'].forEach(id=>$(id).value='');applyRelFilter()">Limpar</button></div><div data-table-anchor="relatorios" id="reportTable"></div></div>
   <div class="card"><div class="toolbar"><div><h3 style="margin:0">Relatórios detalhados por guia</h3><small class="muted">Clientes, Produtos, Estoque/FEFO, Transferências, PDV/Vendas, Fechamento de Caixa, Financeiro e Logs</small></div><div class="toolbar-right"><button class="btn ok" onclick="exportReportCSV()">⇩ CSV</button><button class="btn primary" onclick="printReport()">Imprimir</button></div></div>
   <div class="table-filters"><div class="group"><label>Guia / relatório</label><select id="rp-type" onchange="generateReport()">${Object.entries(REPORT_DEFS).map(([k,d])=>`<option value="${k}">${d.title}</option>`).join('')}</select></div><div class="group"><label>Busca detalhada</label><input id="rp-q" placeholder="Qualquer campo..." oninput="generateReport()"></div><div class="group"><label>Período de</label><input id="rp-from" type="date" onchange="generateReport()"></div><div class="group"><label>até</label><input id="rp-to" type="date" onchange="generateReport()"></div><button class="btn light" onclick="['rp-q','rp-from','rp-to'].forEach(id=>$(id).value='');generateReport()">Limpar</button></div>
   <div id="rpSummary" class="kpis" style="margin-bottom:12px"></div><div data-table-anchor="relDet" id="rpOut"></div></div>`;
   const _prods=await getAll('produtos');
-  const _enrich=x=>{const p=_prods.find(p=>p.cod===x.produtoCod);return{...x,_desc:p?.descricao||'',_barras:p?.codigoBarras||'',_vVenda:Number(p?.vVenda||0)}};
+  const _sidx=await saidasIndex(v);
+  const _enrich=x=>{const p=_prods.find(p=>p.cod===x.produtoCod);return{...x,_desc:p?.descricao||'',_barras:p?.codigoBarras||'',_vVenda:Number(p?.vVenda||0),_saidas:_sidx.porLote[saidaKey(x)]||0,_saidasProd:_sidx.porProduto[x.produtoCod]||0}};
   window._relBase=groupLotes(l.filter(x=>x.qtd>0)).map(_enrich);
-  function draw(){tableState.relatorios.draw=draw;let {rows}=pageItems('relatorios');$('reportTable').innerHTML=`<table><thead><tr><th>Produto</th><th>SKU / Código</th><th>Código de barras</th><th>Lote</th><th>Qtd</th><th>Vencimento</th><th>Ações</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x._desc||x.produtoCod)}</td><td>${esc(x.produtoCod)}</td><td>${esc(x._barras||'—')}</td><td>${esc(x.lote||'—')}</td><td>${x.qtd}</td><td>${x.vencimento?new Date(x.vencimento).toLocaleDateString('pt-BR'):'<span class="tag">Não perecível</span>'}</td><td><div class="table-actions"><button class="btn light" onclick="editRecord('lotes','${x._ids[0]}','entrada')">Alterar</button><button class="btn warn" onclick="estornarLote('${x._ids[0]}')">Estornar</button><button class="btn bad" onclick="excluirGrupoLotes('${x._ids.join(',')}')">Excluir</button></div></td></tr>`).join('')}</tbody></table>${paginationHTML('relatorios')}`}
+  function draw(){tableState.relatorios.draw=draw;let {rows}=pageItems('relatorios');$('reportTable').innerHTML=`<table><thead><tr><th>Produto</th><th>SKU / Código</th><th>Código de barras</th><th>Lote</th><th>Qtd</th><th>Saídas do lote</th><th>Saídas do produto</th><th>Vencimento</th><th>Ações</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x._desc||x.produtoCod)}</td><td>${esc(x.produtoCod)}</td><td>${esc(x._barras||'—')}</td><td>${esc(x.lote||'—')}</td><td>${x.qtd}</td><td>${Number(x._saidas||0)}</td><td>${Number(x._saidasProd||0)}</td><td>${x.vencimento?new Date(x.vencimento).toLocaleDateString('pt-BR'):'<span class="tag">Não perecível</span>'}</td><td><div class="table-actions"><button class="btn light" onclick="editRecord('lotes','${x._ids[0]}','entrada')">Alterar</button><button class="btn warn" onclick="estornarLote('${x._ids[0]}')">Estornar</button><button class="btn bad" onclick="excluirGrupoLotes('${x._ids.join(',')}')">Excluir</button></div></td></tr>`).join('')}</tbody></table>${paginationHTML('relatorios')}`}
   tableState.relatorios={size:10,page:1,list:window._relBase,draw};draw();
   await generateReport();
 }
@@ -578,6 +616,16 @@ function applyRelFilter(){let q=filterValue('re-q');let a=(_relBase||[]).filter(
 
 const dt=v=>v?new Date(v).toLocaleDateString('pt-BR'):'—';
 const dtm=v=>v?new Date(v).toLocaleString('pt-BR'):'—';
+async function saidasIndex(vendas){
+  const v=vendas||await getAll('vendas');
+  const porProduto={},porLote={},valor={},pedidos={},ultima={};
+  for(const s of v){
+    for(const i of (s.itens||[])){const c=i.cod;porProduto[c]=(porProduto[c]||0)+Number(i.qtd||0);valor[c]=(valor[c]||0)+Number(i.qtd||0)*Number(i.vVenda||i.preco||i.valor||0);pedidos[c]=(pedidos[c]||0)+1;if(String(s.ts||'')>String(ultima[c]||''))ultima[c]=s.ts;}
+    for(const f of (s.fefo||[]))for(const m of (f.lotes||[])){const k=[f.cod,m.lote||'',m.vencimento||''].join('|');porLote[k]=(porLote[k]||0)+Number(m.qtd||0);}
+  }
+  return {porProduto,porLote,valor,pedidos,ultima};
+}
+const saidaKey=x=>[x.produtoCod,x.lote||'',x.vencimento||''].join('|');
 const REPORT_DEFS={
   clientes:{title:'Clientes',store:'clientes',dateField:null,
     cols:[['Nome',x=>x.nome],['CPF',x=>x.cpf],['Telefone',x=>x.telefone],['E-mail',x=>x.email],['Endereço',x=>[x.endereco,x.bairro].filter(Boolean).join(', ')],['Cidade/UF',x=>`${x.cidade||''}${x.uf?' / '+x.uf:''}`]],
@@ -586,8 +634,23 @@ const REPORT_DEFS={
     cols:[['Código',x=>x.cod],['Barras',x=>x.codigoBarras],['Descrição',x=>x.descricao],['Categoria',x=>x.categoria],['Unid.',x=>x.unidade],['Est. mín.',x=>x.estoqueMin],['Compra',x=>money(x.vCompra)],['Venda',x=>money(x.vVenda)],['Status',x=>x.ativo?'Ativo':'Inativo']],
     summary:r=>[['Produtos',r.length],['Ativos',r.filter(x=>x.ativo).length],['Valor de venda',money(r.reduce((s,x)=>s+Number(x.vVenda||0),0))]]},
   estoque:{title:'Estoque / FEFO (lotes)',store:'lotes',dateField:'vencimento',
-    cols:[['Produto',x=>x._desc||x.produtoCod],['SKU / Código',x=>x.produtoCod],['Código de barras',x=>x._barras||'—'],['Lote',x=>x.lote||'—'],['Estoque',x=>x.estoque],['Qtd',x=>x.qtd],['Entrada',x=>dt(x.entradaEm||x.ts)],['Vencimento',x=>x.vencimento?dt(x.vencimento):'Não perecível'],['Situação',x=>!x.vencimento?'Não perecível':(new Date(x.vencimento)<new Date(today())?'Vencido':'Válido')],['Valor venda un.',x=>money(x._vVenda||0)],['Receita mercadoria',x=>money(Number(x.qtd||0)*Number(x._vVenda||0))]],
-    summary:r=>[['Itens',r.length],['Saldo total',r.reduce((s,x)=>s+Number(x.qtd||0),0)],['Receita total de mercadoria',money(r.reduce((s,x)=>s+Number(x.qtd||0)*Number(x._vVenda||0),0))],['Vencidos',r.filter(x=>x.vencimento&&x.vencimento<today()).length],['Não perecíveis',r.filter(x=>!x.vencimento).length]]},
+    cols:[['Produto',x=>x._desc||x.produtoCod],['SKU / Código',x=>x.produtoCod],['Código de barras',x=>x._barras||'—'],['Lote',x=>x.lote||'—'],['Estoque',x=>x.estoque],['Qtd',x=>x.qtd],['Entrada',x=>dt(x.entradaEm||x.ts)],['Vencimento',x=>x.vencimento?dt(x.vencimento):'Não perecível'],['Situação',x=>!x.vencimento?'Não perecível':(new Date(x.vencimento)<new Date(today())?'Vencido':'Válido')],['Valor venda un.',x=>money(x._vVenda||0)],['Receita mercadoria',x=>money(Number(x.qtd||0)*Number(x._vVenda||0))],['Saídas do lote (qtd)',x=>Number(x._saidas||0)],['Saídas do produto (qtd)',x=>Number(x._saidasProd||0)]],
+    summary:r=>[['Itens',r.length],['Saldo total',r.reduce((s,x)=>s+Number(x.qtd||0),0)],['Saídas por quantidade',r.reduce((s,x)=>s+Number(x._saidas||0),0)],['Receita total de mercadoria',money(r.reduce((s,x)=>s+Number(x.qtd||0)*Number(x._vVenda||0),0))],['Vencidos',r.filter(x=>x.vencimento&&x.vencimento<today()).length],['Não perecíveis',r.filter(x=>!x.vencimento).length]]},
+  saidas:{title:'Saídas de produtos por quantidade',store:'vendas',dateField:'ts',
+    build:async rows=>{
+      const prod=await getAll('produtos'),map={};
+      for(const s of rows){
+        for(const i of (s.itens||[])){
+          const c=i.cod,m=map[c]??={cod:c,descricao:i.descricao||'',qtd:0,valor:0,pedidos:0,ultima:'',lotes:0};
+          m.qtd+=Number(i.qtd||0);m.valor+=Number(i.qtd||0)*Number(i.vVenda||i.preco||i.valor||0);m.pedidos++;
+          if(String(s.ts||'')>String(m.ultima))m.ultima=s.ts;
+        }
+        for(const f of (s.fefo||[]))for(const mv of (f.lotes||[])){const m=map[f.cod];if(m)m.lotes+=Number(mv.qtd||0)}
+      }
+      return Object.values(map).map(m=>{const p=prod.find(p=>p.cod===m.cod);return{...m,descricao:m.descricao||p?.descricao||'',barras:p?.codigoBarras||'',vVenda:Number(p?.vVenda||0)}}).sort((a,b)=>b.qtd-a.qtd);
+    },
+    cols:[['Produto',x=>x.descricao||x.cod],['SKU / Código',x=>x.cod],['Código de barras',x=>x.barras||'—'],['Saídas (qtd)',x=>x.qtd],['Qtd baixada por lote (FEFO)',x=>x.lotes],['Vendas',x=>x.pedidos],['Última saída',x=>dtm(x.ultima)],['Valor de venda un.',x=>money(x.vVenda)],['Total vendido',x=>money(x.valor||Number(x.qtd)*Number(x.vVenda||0))]],
+    summary:r=>[['Produtos com saída',r.length],['Saídas por quantidade',r.reduce((s,x)=>s+Number(x.qtd||0),0)],['Total vendido',money(r.reduce((s,x)=>s+Number(x.valor||0),0))],['Mais vendido',r[0]?`${r[0].descricao||r[0].cod} (${r[0].qtd})`:'—']]},
   transferencias:{title:'Transferências',store:'transferencias',dateField:'ts',
     cols:[['Data',x=>dtm(x.ts)],['Produto',x=>x._desc||x.produtoCod],['Qtd',x=>x.qtd],['Origem',x=>x.origem],['Destino',x=>x.destino],['Lote',x=>x.lote||'—'],['Usuário',x=>x.user||'—']],
     summary:r=>[['Transferências',r.length],['Qtd movimentada',r.reduce((s,x)=>s+Number(x.qtd||0),0)]]},
@@ -609,10 +672,12 @@ async function generateReport(){
   let rows=await getAll(def.store);
   if(key==='estoque')rows=groupLotes(rows);
   if(key==='estoque'||key==='transferencias'){const prod=await getAll('produtos');rows=rows.map(x=>{const p=prod.find(p=>p.cod===x.produtoCod);return {...x,_desc:p?.descricao||'',_barras:p?.codigoBarras||'',_vVenda:Number(p?.vVenda||0),_vCompra:Number(p?.vCompra||0)}})}
+  if(key==='estoque'){const idx=await saidasIndex();rows=rows.map(x=>({...x,_saidas:idx.porLote[saidaKey(x)]||0,_saidasProd:idx.porProduto[x.produtoCod]||0}))}
   if(key==='vendas'){const cli=await getAll('clientes');rows=rows.map(x=>({...x,_cliente:cli.find(c=>c.id===x.clienteId)?.nome||''}))}
   const q=filterValue('rp-q'), from=filterValue('rp-from'), to=filterValue('rp-to');
   rows=rows.filter(x=>(!q||JSON.stringify(x).toLowerCase().includes(q))&&(!def.dateField||dateInRange(x[def.dateField],from,to)));
   if(def.dateField)rows.sort((a,b)=>String(b[def.dateField]||'').localeCompare(String(a[def.dateField]||'')));
+  if(def.build)rows=await def.build(rows);
   window._rpDef=def;window._rpRows=rows;
   $('rpSummary').innerHTML=def.summary(rows).map(([l,v])=>`<div class="kpi"><div class="label">${esc(l)}</div><div class="v">${esc(String(v))}</div></div>`).join('');
   function draw(){
@@ -660,23 +725,123 @@ function applyLogsFilter(){let u=$('lg-user')?.value||'',a=$('lg-act')?.value||'
 async function renderConfig(){let cfg=await configGet('settings')||{empresa:'ASV System',moeda:'BRL',estoques:['Principal'],diasFEFO:30};const rc=await receiptConfig();$('content').innerHTML=`<div class="card"><div class="toolbar"><h3>Parâmetros</h3><button class="btn primary" onclick="saveConfig()">Salvar parâmetros</button></div><div class="grid"><div class="group"><label>Empresa</label><input id="cfgEmpresa" value="${esc(cfg.empresa)}"></div><div class="group"><label>Moeda</label><input id="cfgMoeda" value="${esc(cfg.moeda)}"></div><div class="group"><label>Alerta FEFO (dias)</label><input id="cfgFefo" type="number" value="${cfg.diasFEFO}"></div><div class="group full"><label>Estoques (um por linha)</label><textarea id="cfgEstoques" rows="4">${esc(cfg.estoques.join('\\n'))}</textarea></div></div></div><div class="card"><div class="toolbar"><h3>Comprovante de venda (PDV)</h3><button class="btn light" onclick="printLastReceipt()">Ver último comprovante</button></div><div class="grid"><div class="group"><label>Gerar comprovante ao finalizar a venda</label><select id="cfgCompAuto"><option value="1"${rc.comprovanteAuto?' selected':''}>Sim, abrir automaticamente</option><option value="0"${rc.comprovanteAuto?'':' selected'}>Não</option></select></div><div class="group"><label>Vias na impressão</label><select id="cfgCompVias">${[1,2,3].map(n=>`<option value="${n}"${rc.vias===n?' selected':''}>${n} via(s)</option>`).join('')}</select></div><div class="group"><label>CNPJ</label><input id="cfgCnpj" value="${esc(rc.cnpj)}"></div><div class="group"><label>Telefone</label><input id="cfgTel" value="${esc(rc.telefone)}"></div><div class="group full"><label>Endereço da empresa</label><input id="cfgEnd" value="${esc(rc.endereco)}"></div><div class="group full"><label>Mensagem do rodapé</label><textarea id="cfgRodape" rows="2">${esc(rc.rodape)}</textarea></div></div><div class="notice">O comprovante traz dados do cliente, produtos com SKU, código de barras, lote e validade (FEFO), quantidades, valores, desconto, formas de pagamento, troco, parcelas, operador, caixa e data/hora da compra.</div></div><div class="card"><div class="toolbar"><h3>Importar / Exportar dados (.xlsx)</h3><div class="toolbar-right"><button class="btn ok" onclick="exportXLSX()">⇩ Exportar .xlsx</button><button class="btn primary" onclick="pickXLSX()">⇧ Importar .xlsx</button><button class="btn light" onclick="downloadXLSXTemplate()">Modelo</button></div></div><div class="notice">A exportação gera uma planilha com as abas <b>Produtos</b> e <b>Estoque</b> (lotes FEFO). Na importação, produtos são atualizados pelo código/SKU e cada linha da aba Estoque cria um novo lote.</div><input id="xlsxFile" type="file" accept=".xlsx,.xls" class="hidden" onchange="importXLSX(this)"></div><div class="card"><h3>Criptografia local</h3><div class="notice">Dados de negócio sensíveis ficam cifrados durante a sessão com AES-GCM; credenciais usam PBKDF2-SHA-256. O IndexedDB ainda armazena metadados técnicos necessários ao funcionamento.</div></div>`}
 async function saveConfig(){let old=await configGet('settings')||{};let cfg={...old,empresa:$('cfgEmpresa').value,moeda:$('cfgMoeda').value,diasFEFO:Number($('cfgFefo').value)||30,estoques:$('cfgEstoques').value.split(/\\n+/).map(x=>x.trim()).filter(Boolean),comprovanteAuto:$('cfgCompAuto').value==='1',comprovanteVias:Number($('cfgCompVias').value)||1,cnpj:$('cfgCnpj').value,telEmpresa:$('cfgTel').value,endEmpresa:$('cfgEnd').value,comprovanteRodape:$('cfgRodape').value};await configSet('settings',cfg);await log('UPDATE','config',old,cfg);toast('Parâmetros salvos.')}
 
+/* ===== Inventário profissional por contagem/bipagem ===== */
+let invSession=null;
 async function openInventory(){
-  let products=await getAll('produtos'),lotes=await getAll('lotes'),map={};
-  lotes.forEach(l=>{map[l.produtoCod]=(map[l.produtoCod]||0)+Number(l.qtd)});
-  let base=products.map(p=>({...p,sistema:map[p.cod]||0}));
-  modalSpec={title:'Inventário físico',store:null};$('modalTitle').textContent='Inventário físico';
-  $('modalBody').innerHTML=`<div class="notice">Digite a contagem física e confirme. Diferenças serão registradas no inventário e no log.</div>
-  <div class="table-filters" style="margin-top:10px"><div class="group"><label>Busca</label><input id="inv-q" placeholder="Código ou produto..." oninput="applyInventoryFilter()"></div><div class="group"><label>Saldo sistema</label><select id="inv-st" onchange="applyInventoryFilter()"><option value="">Todos</option><option value="0">Zerado</option><option value="pos">Com saldo</option></select></div><button class="btn light" onclick="['inv-q','inv-st'].forEach(id=>$(id).value='');applyInventoryFilter()">Limpar</button></div>
-  <div data-table-anchor="inventarioModal" id="invTable" style="margin-top:10px"></div>`;
-  $('modalForm').onsubmit=async e=>{e.preventDefault();let rows=Object.values(tableState.inventarioModal.inputs||{}).filter(x=>x.value!=='').map(x=>({produtoCod:x.dataset.cod,sistema:Number(x.dataset.sistema)||0,contado:Number(x.value),dif:Number(x.value)-(Number(x.dataset.sistema)||0)}));await put('inventario',{id:uid(),ts:new Date().toISOString(),user:session.login,rows});await log('CREATE','inventario',null,rows);closeModal();toast('Inventário registrado.');};
-  $('modal').classList.add('active');
-  window._invBase=base;
-  function draw(){tableState.inventarioModal.draw=draw;let {rows}=pageItems('inventarioModal');$('invTable').innerHTML=`<table><thead><tr><th>Produto</th><th>Saldo sistema</th><th>Contagem</th></tr></thead><tbody>${rows.map(p=>`<tr><td>${esc(p.cod)} — ${esc(p.descricao)}</td><td>${p.sistema}</td><td><input class="inv-count" data-cod="${esc(p.cod)}" data-sistema="${p.sistema}" type="number" min="0"></td></tr>`).join('')}</tbody></table>${paginationHTML('inventarioModal')}`;
-    tableState.inventarioModal.inputs={};document.querySelectorAll('.inv-count').forEach(x=>tableState.inventarioModal.inputs[x.dataset.cod]=x);
-  }
-  tableState.inventarioModal={size:10,page:1,list:base,draw,inputs:{}};draw();
+  if(!session)return toast('Faça login para continuar.','bad');
+  if(!allowed('estoque'))return toast('Sem permissão para inventariar.','bad');
+  const [produtos,lotes,cfg]=await Promise.all([getAll('produtos'),getAll('lotes'),configGet('settings')]);
+  const estoques=(cfg&&cfg.estoques&&cfg.estoques.length)?cfg.estoques:['Principal'];
+  invSession={produtos:produtos.filter(p=>p.ativo===undefined||p.ativo),lotes,estoque:estoques[0],scans:0,counts:{},filter:'todos',q:'',inicio:new Date().toISOString()};
+  $('invStock').innerHTML=estoques.map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join('');
+  $('invDate').value=today();$('invUser').value=session?.login||'—';
+  $('invBarcode').value='';$('invScanQty').value='1';$('invSearch').value='';$('invFilter').value='todos';
+  drawInventory();$('invModal').classList.add('active');setTimeout(()=>$('invBarcode').focus(),60);
 }
-function applyInventoryFilter(){let q=filterValue('inv-q'),st=$('inv-st')?.value||'';let a=(_invBase||[]).filter(x=>(!q||`${x.cod} ${x.descricao}`.toLowerCase().includes(q))&&(!st||(st==='0'&&x.sistema===0)||(st==='pos'&&x.sistema>0)));setTableState('inventarioModal',a);tableState.inventarioModal.draw?.()}
+function invSystemQty(cod){
+  const est=invSession?.estoque;
+  return (invSession?.lotes||[]).filter(l=>l.produtoCod===cod&&(!est||!l.estoque||l.estoque===est)).reduce((s,l)=>s+Number(l.qtd||0),0);
+}
+function invAllRows(){
+  if(!invSession)return [];
+  return invSession.produtos.map(p=>{
+    const c=invSession.counts[p.cod],sistema=invSystemQty(p.cod),contado=c?Number(c.qtd):null;
+    return {...p,sistema,contado,dif:contado===null?null:contado-sistema,scans:c?.scans||0,ultima:c?.ts||''};
+  });
+}
+function invRows(){
+  const q=(invSession?.q||'').toLowerCase(),f=invSession?.filter||'todos';
+  return invAllRows()
+    .filter(x=>!q||`${x.cod} ${x.codigoBarras||''} ${x.descricao}`.toLowerCase().includes(q))
+    .filter(x=>f==='todos'||(f==='contados'&&x.contado!==null)||(f==='pendentes'&&x.contado===null)||(f==='diverg'&&x.contado!==null&&x.dif!==0))
+    .sort((a,b)=>(a.contado===null)-(b.contado===null)||String(b.ultima).localeCompare(String(a.ultima))||String(a.descricao).localeCompare(String(b.descricao)));
+}
+function drawInventory(){
+  if(!invSession)return;
+  const all=invAllRows(),contados=all.filter(x=>x.contado!==null),div=contados.filter(x=>x.dif!==0);
+  const itens=contados.reduce((s,x)=>s+Number(x.contado||0),0);
+  const acc=contados.length?Math.round(((contados.length-div.length)/contados.length)*100):100;
+  $('invScanCount').textContent=invSession.scans;
+  $('invProdCount').textContent=`${contados.length}/${all.length}`;
+  $('invItemCount').textContent=itens;
+  $('invDivCount').textContent=div.length;
+  $('invAcc').textContent=acc+'%';
+  const rows=invRows();
+  $('invLines').innerHTML=`<table><thead><tr><th>Produto</th><th>Código / Barras</th><th>Saldo sistema</th><th>Contagem</th><th>Diferença</th><th>Situação</th><th>Bipagens</th><th>Ação</th></tr></thead><tbody>${rows.map(x=>{
+    const st=x.contado===null?'<span class="tag">Não contado</span>':x.dif===0?'<span class="tag ok">Conferido</span>':x.dif>0?'<span class="tag warn">Sobra</span>':'<span class="tag bad">Falta</span>';
+    const c=String(x.cod).replace(/'/g,"\\'");
+    return `<tr><td>${esc(x.descricao)}</td><td>${esc(x.cod)}${x.codigoBarras?`<br><small>${esc(x.codigoBarras)}</small>`:''}</td><td>${x.sistema}</td><td><input type="number" min="0" step="1" value="${x.contado===null?'':x.contado}" onchange="setInvCount('${c}',this.value)"></td><td>${x.dif===null?'—':(x.dif>0?'+':'')+x.dif}</td><td>${st}</td><td>${x.scans}</td><td>${x.contado===null?'':`<button type="button" class="btn bad" onclick="clearInvCount('${c}')">×</button>`}</td></tr>`;
+  }).join('')||'<tr><td colspan="8" class="muted">Nenhum produto para os filtros informados.</td></tr>'}</tbody></table>`;
+}
+function invFindProduct(code){
+  const q=String(code||'').trim().toLowerCase();if(!q)return null;
+  const list=invSession?.produtos||[];
+  return list.find(p=>String(p.codigoBarras||'').toLowerCase()===q)||list.find(p=>String(p.cod||'').toLowerCase()===q)||list.find(p=>String(p.descricao||'').toLowerCase()===q);
+}
+function scanInventory(){
+  if(!invSession)return;
+  const code=$('invBarcode').value.trim(),qty=Math.floor(Number($('invScanQty').value)||0);
+  if(!code)return toast('Bipe ou informe o código do produto.','bad');
+  if(qty<1)return toast('A quantidade deve ser maior que zero.','bad');
+  const p=invFindProduct(code);if(!p)return toast(`Produto não encontrado para o código: ${code}`,'bad');
+  const cur=invSession.counts[p.cod]||{qtd:0,scans:0};
+  invSession.counts[p.cod]={qtd:Number(cur.qtd)+qty,scans:Number(cur.scans)+1,ts:new Date().toISOString(),descricao:p.descricao};
+  invSession.scans++;$('invBarcode').value='';$('invScanQty').value='1';
+  drawInventory();$('invBarcode').focus();
+  const sis=invSystemQty(p.cod),dif=invSession.counts[p.cod].qtd-sis;
+  toast(`${p.descricao}: ${invSession.counts[p.cod].qtd} contado(s) • sistema ${sis} • ${dif===0?'conferido':(dif>0?'sobra +'+dif:'falta '+dif)}`,dif===0?'ok':'warn');
+}
+function setInvCount(cod,val){
+  if(!invSession)return;
+  const v=String(val).trim();
+  if(v===''){delete invSession.counts[cod];}
+  else{const q=Math.max(0,Math.floor(Number(v)||0));const cur=invSession.counts[cod]||{scans:0};invSession.counts[cod]={qtd:q,scans:cur.scans||0,ts:new Date().toISOString()};}
+  drawInventory();
+}
+function clearInvCount(cod){if(!invSession)return;delete invSession.counts[cod];drawInventory()}
+function invChangeStock(){if(!invSession)return;invSession.estoque=$('invStock').value;drawInventory()}
+function invFilterChange(){if(!invSession)return;invSession.filter=$('invFilter').value;invSession.q=$('invSearch').value.trim();drawInventory()}
+function cancelInventory(){
+  if(!invSession)return;
+  if(Object.keys(invSession.counts).length&&!confirm('Cancelar o inventário em andamento? A contagem não será gravada.'))return;
+  invSession=null;$('invModal').classList.remove('active');
+}
+async function aplicarAjusteInventario(cod,dif,estoque){
+  if(!dif)return;
+  if(dif>0){
+    const rec={id:uid(),produtoCod:cod,qtd:dif,vencimento:'',perecivel:0,lote:'AJUSTE-INV',custo:0,estoque,entradaEm:today(),ts:new Date().toISOString(),entradaPor:session?.login||'sistema',origem:'inventario'};
+    await put('lotes',rec);await log('CREATE','lotes',null,rec);return;
+  }
+  let rest=-dif;
+  const lots=(await getAll('lotes')).filter(l=>l.produtoCod===cod&&Number(l.qtd)>0&&(!estoque||!l.estoque||l.estoque===estoque)).sort((a,b)=>String(a.vencimento||'9999-12-31').localeCompare(String(b.vencimento||'9999-12-31')));
+  for(const l of lots){if(rest<=0)break;const take=Math.min(rest,Number(l.qtd));const before={...l};l.qtd=Number(l.qtd)-take;rest-=take;await put('lotes',l);await log('UPDATE','lotes',before,l)}
+}
+async function saveInventory(finalizar){
+  if(!invSession)return;
+  const rows=invAllRows().filter(x=>x.contado!==null).map(x=>({produtoCod:x.cod,descricao:x.descricao,codigoBarras:x.codigoBarras||'',sistema:x.sistema,contado:x.contado,dif:x.dif,scans:x.scans}));
+  if(!rows.length)return toast('Conte pelo menos um produto antes de salvar.','bad');
+  const div=rows.filter(x=>x.dif!==0);
+  if(finalizar&&!confirm(`Finalizar inventário do estoque "${invSession.estoque}"?\n${rows.length} produto(s) contado(s), ${div.length} divergência(s).\nO saldo do sistema será ajustado para a contagem física.`))return;
+  if(!finalizar&&!confirm(`Salvar a contagem de ${rows.length} produto(s) sem ajustar o estoque?`))return;
+  try{
+    if(finalizar)for(const r of div)await aplicarAjusteInventario(r.produtoCod,r.dif,invSession.estoque);
+    const rec={id:uid(),ts:new Date().toISOString(),inicio:invSession.inicio,user:session?.login||'sistema',estoque:invSession.estoque,tipo:finalizar?'Ajustado':'Somente contagem',bipagens:invSession.scans,produtos:rows.length,divergencias:div.length,rows};
+    await put('inventario',rec);await log('CREATE','inventario',null,rec);
+    invSession=null;$('invModal').classList.remove('active');
+    toast(finalizar?`Inventário finalizado: ${div.length} ajuste(s) aplicado(s) ao estoque.`:'Contagem de inventário salva.');
+    await openPage(currentPage);
+  }catch(err){console.error(err);toast('Erro ao gravar inventário: '+(err.message||err),'bad')}
+}
+function printInventory(){
+  if(!invSession)return;
+  const rows=invAllRows().filter(x=>x.contado!==null);
+  if(!rows.length)return toast('Nenhuma contagem para imprimir.','bad');
+  const w=window.open('','_blank');if(!w)return toast('Permita pop-ups para imprimir.','bad');
+  w.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Inventário</title><style>body{font-family:Arial,sans-serif;padding:18px;color:#243447}h1{font-size:1.2rem;margin:0}small{color:#748292}table{width:100%;border-collapse:collapse;font-size:.75rem;margin-top:12px}th,td{border:1px solid #d9e1e8;padding:5px;text-align:left}th{background:#213547;color:#fff}</style></head><body><h1>ASV System — Inventário por contagem (bipagem)</h1><small>Estoque: ${esc(invSession.estoque)} • Responsável: ${esc(session?.login||'—')} • ${new Date().toLocaleString('pt-BR')}</small><table><thead><tr><th>Produto</th><th>Código</th><th>Sistema</th><th>Contado</th><th>Diferença</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.descricao)}</td><td>${esc(x.cod)}</td><td>${x.sistema}</td><td>${x.contado}</td><td>${(x.dif>0?'+':'')+x.dif}</td></tr>`).join('')}</tbody></table></body></html>`);
+  w.document.close();w.focus();w.print();
+}
+$('invBarcode')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();scanInventory()}});
+$('invScanQty')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();scanInventory()}});
 
 /* ===== Entrada de mercadoria por bipagem ===== */
 let entrySession=null;
